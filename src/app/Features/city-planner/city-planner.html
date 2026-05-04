@@ -1,0 +1,442 @@
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
+  <!-- Header -->
+  <div class="bg-white shadow-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 py-6">
+      <div class="flex justify-between items-center">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-800">City Planner Dashboard</h1>
+          
+        </div>
+        <div class="flex items-center gap-4">
+          <button (click)="openProjectModal()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+            + New Project
+          </button>
+          <a routerLink="/auth/login" class="inline-flex items-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors">
+            Logout
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="max-w-7xl mx-auto px-4 py-8">
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+        <p class="text-gray-600 text-sm">Total Projects</p>
+        <p class="text-3xl font-bold text-blue-600 mt-2">{{ projectStats.total }}</p>
+      </div>
+      <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+        <p class="text-gray-600 text-sm">Active Projects</p>
+        <p class="text-3xl font-bold text-green-600 mt-2">{{ projectStats.active }}</p>
+      </div>
+      <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
+        <p class="text-gray-600 text-sm">Completed</p>
+        <p class="text-3xl font-bold text-purple-600 mt-2">{{ projectStats.completed }}</p>
+      </div>
+      <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-orange-500">
+        <p class="text-gray-600 text-sm">Total Budget</p>
+        <p class="text-2xl font-bold text-orange-600 mt-2">${{ (projectStats.totalBudget / 1000000).toFixed(1) }}M</p>
+      </div>
+    </div>
+
+    <!-- Projects Grid -->
+    <div *ngIf="!selectedProject" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div *ngFor="let project of projects" (click)="selectProject(project)" class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer p-6 border-t-4 border-blue-500">
+        <div class="flex justify-between items-start mb-3">
+          <h3 class="text-lg font-bold text-gray-800">{{ project.name }}</h3>
+          <span [ngClass]="getStatusColor(project.status)" class="px-3 py-1 rounded-full text-xs font-semibold">
+            {{ project.status }}
+          </span>
+        </div>
+        <p class="text-gray-600 text-sm mb-3">{{ project.description }}</p>
+        
+        <!-- Progress Bar -->
+        <div class="mb-4">
+          <div class="flex justify-between items-center mb-1">
+            <span class="text-xs font-semibold text-gray-700">Progress</span>
+            <span class="text-xs font-bold text-blue-600">{{ project.progress }}%</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-2">
+            <div class="bg-blue-600 h-2 rounded-full" [style.width.%]="project.progress"></div>
+          </div>
+        </div>
+
+        <!-- Project Details -->
+        <div class="space-y-2 text-sm text-gray-600 mb-4">
+          <div class="flex justify-between">
+            <span>Budget:</span>
+            <span class="font-semibold text-gray-800">${{ project.budget.toLocaleString() }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Category:</span>
+            <span class="font-semibold text-gray-800">{{ project.category }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Duration:</span>
+            <span class="font-semibold text-gray-800">{{ project.startDate | slice:0:7 }} - {{ project.endDate | slice:0:7 }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Milestones:</span>
+            <span class="font-semibold text-gray-800">{{ project.milestones.length }}</span>
+          </div>
+        </div>
+
+        <button (click)="selectProject(project); $event.stopPropagation()" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-sm">
+          View Details
+        </button>
+      </div>
+    </div>
+
+    <!-- Project Details View -->
+    <div *ngIf="selectedProject" class="bg-white rounded-lg shadow-lg p-8">
+      <!-- Header -->
+      <div class="flex justify-between items-start mb-6 pb-6 border-b-2 border-gray-200">
+        <div>
+          <h2 class="text-2xl font-bold text-gray-800 mb-2">{{ selectedProject.name }}</h2>
+          <p class="text-gray-600">{{ selectedProject.description }}</p>
+        </div>
+        <button (click)="closeProjectDetails()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+      </div>
+
+      <!-- Project Information Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-blue-50 p-4 rounded-lg">
+          <p class="text-xs text-gray-600 mb-1">Status</p>
+          <p [ngClass]="getStatusColor(selectedProject.status)" class="inline-block px-3 py-1 rounded-full text-xs font-semibold">
+            {{ selectedProject.status }}
+          </p>
+        </div>
+        <div class="bg-orange-50 p-4 rounded-lg">
+          <p class="text-xs text-gray-600 mb-1">Budget</p>
+          <p class="font-bold text-orange-600">${{ selectedProject.budget.toLocaleString() }}</p>
+        </div>
+        <div class="bg-green-50 p-4 rounded-lg">
+          <p class="text-xs text-gray-600 mb-1">Category</p>
+          <p class="font-bold text-green-600">{{ selectedProject.category }}</p>
+        </div>
+        <div class="bg-purple-50 p-4 rounded-lg">
+          <p class="text-xs text-gray-600 mb-1">Progress</p>
+          <p class="font-bold text-purple-600">{{ selectedProject.progress }}%</p>
+        </div>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="mb-6">
+        <div class="flex justify-between items-center mb-2">
+          <span class="text-sm font-semibold text-gray-700">Project Progress</span>
+          <span class="text-sm font-bold text-blue-600">{{ selectedProject.progress }}%</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-3">
+          <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-500" [style.width.%]="selectedProject.progress"></div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="flex gap-4 border-b-2 border-gray-200 mb-6">
+        <button (click)="activeTab = 'overview'" [ngClass]="{'border-blue-600 text-blue-600': activeTab === 'overview', 'text-gray-600': activeTab !== 'overview'}" class="pb-3 font-semibold border-b-2 border-transparent transition-colors">
+          Overview
+        </button>
+        <button (click)="activeTab = 'milestones'" [ngClass]="{'border-blue-600 text-blue-600': activeTab === 'milestones', 'text-gray-600': activeTab !== 'milestones'}" class="pb-3 font-semibold border-b-2 border-transparent transition-colors">
+          Milestones ({{ selectedProject.milestones.length }})
+        </button>
+        <button (click)="activeTab = 'resources'" [ngClass]="{'border-blue-600 text-blue-600': activeTab === 'resources', 'text-gray-600': activeTab !== 'resources'}" class="pb-3 font-semibold border-b-2 border-transparent transition-colors">
+          Resources ({{ selectedProject.resources.length }})
+        </button>
+        <button (click)="activeTab = 'impact'" [ngClass]="{'border-blue-600 text-blue-600': activeTab === 'impact', 'text-gray-600': activeTab !== 'impact'}" class="pb-3 font-semibold border-b-2 border-transparent transition-colors">
+          Impact
+        </button>
+      </div>
+
+      <!-- Tab Content -->
+
+      <!-- Overview Tab -->
+      <div *ngIf="activeTab === 'overview'" class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <h4 class="font-semibold text-gray-800 mb-2">📅 Timeline</h4>
+            <p class="text-sm text-gray-600 mb-1">Start Date: <span class="font-semibold">{{ selectedProject.startDate }}</span></p>
+            <p class="text-sm text-gray-600">End Date: <span class="font-semibold">{{ selectedProject.endDate }}</span></p>
+          </div>
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <h4 class="font-semibold text-gray-800 mb-2">📊 Overview</h4>
+            <p class="text-sm text-gray-600 mb-1">Milestones: <span class="font-semibold">{{ selectedProject.milestones.length }}</span></p>
+            <p class="text-sm text-gray-600">Resources: <span class="font-semibold">{{ selectedProject.resources.length }}</span></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Milestones Tab -->
+      <div *ngIf="activeTab === 'milestones'" class="space-y-4">
+        <button (click)="openMilestoneModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-sm">
+          + Add Milestone
+        </button>
+        <div *ngIf="selectedProject.milestones.length === 0" class="text-center py-8 text-gray-500">
+          <p>No milestones added yet</p>
+        </div>
+        <div *ngFor="let milestone of selectedProject.milestones" class="bg-gray-50 p-4 rounded-lg border-l-4 border-blue-500 flex justify-between items-center">
+          <div class="flex-1">
+            <h4 class="font-semibold text-gray-800">{{ milestone.name }}</h4>
+            <p class="text-sm text-gray-600">📅 {{ milestone.date }}</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <select (change)="updateMilestoneStatus(milestone.id, $any($event.target).value)" [ngClass]="getStatusColor(milestone.status)" class="text-xs border rounded px-3 py-1 font-semibold">
+              <option>Not Started</option>
+              <option>In Progress</option>
+              <option>Completed</option>
+            </select>
+            <button (click)="deleteMilestone(milestone.id)" class="text-red-500 hover:text-red-700 font-bold">🗑️</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resources Tab -->
+      <div *ngIf="activeTab === 'resources'" class="space-y-4">
+        <button (click)="openResourceModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-sm">
+          + Add Resource
+        </button>
+        <div *ngIf="selectedProject.resources.length === 0" class="text-center py-8 text-gray-500">
+          <p>No resources allocated yet</p>
+        </div>
+        <div class="space-y-3">
+          <div *ngFor="let resource of selectedProject.resources" class="bg-gray-50 p-4 rounded-lg border-l-4 border-green-500">
+            <div class="flex justify-between items-start mb-2">
+              <div class="flex items-center gap-3">
+                <span class="text-2xl">{{ getResourceTypeIcon(resource.type) }}</span>
+                <div>
+                  <h4 class="font-semibold text-gray-800">{{ resource.name }}</h4>
+                  <p class="text-xs text-gray-600">{{ resource.type }}</p>
+                </div>
+              </div>
+              <button (click)="deleteResource(resource.id)" class="text-red-500 hover:text-red-700 font-bold">🗑️</button>
+            </div>
+            <div class="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p class="text-gray-600">Quantity</p>
+                <p class="font-semibold text-gray-800">{{ resource.quantity }}</p>
+              </div>
+              <div>
+                <p class="text-gray-600">Allocation</p>
+                <p class="font-semibold text-gray-800">{{ resource.allocation }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Impact Tab -->
+      <div *ngIf="activeTab === 'impact'" class="space-y-4">
+        <button (click)="openImpactModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-sm">
+          📊 Set/Edit Impact
+        </button>
+        <div class="bg-gradient-to-br from-green-50 to-blue-50 p-6 rounded-lg border-2 border-green-200 min-h-[200px] flex items-center justify-center">
+          <div *ngIf="selectedProject.impact" class="text-center">
+            <p class="text-2xl mb-4">🎯</p>
+            <p class="text-gray-800 leading-relaxed">{{ selectedProject.impact }}</p>
+          </div>
+          <div *ngIf="!selectedProject.impact" class="text-center text-gray-500">
+            <p class="text-lg">No impact statement set yet</p>
+            <p class="text-sm mt-2">Click "Set/Edit Impact" to add one</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Back Button -->
+      <button (click)="closeProjectDetails()" class="mt-8 px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-semibold">
+        ← Back to Projects
+      </button>
+    </div>
+  </div>
+
+  <!-- Create Project Modal -->
+  <div *ngIf="showProjectModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">Create New Project</h2>
+        <button (click)="closeProjectModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+      </div>
+
+      <form [formGroup]="projectForm" class="space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Project Name *</label>
+          <input formControlName="name" type="text" placeholder="Enter project name" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <p *ngIf="projectForm.get('name')?.invalid && projectForm.get('name')?.touched" class="text-red-500 text-xs mt-1">Name must be at least 3 characters</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Description *</label>
+          <textarea formControlName="description" placeholder="Enter project description" rows="3" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+          <p *ngIf="projectForm.get('description')?.invalid && projectForm.get('description')?.touched" class="text-red-500 text-xs mt-1">Description must be at least 10 characters</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Category *</label>
+            <select formControlName="category" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="">Select Category</option>
+              <option value="Environment">Environment</option>
+              <option value="Transportation">Transportation</option>
+              <option value="Infrastructure">Infrastructure</option>
+              <option value="Sustainability">Sustainability</option>
+              <option value="Community">Community</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Budget ($) *</label>
+            <input formControlName="budget" type="number" placeholder="Enter budget" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <p *ngIf="projectForm.get('budget')?.invalid && projectForm.get('budget')?.touched" class="text-red-500 text-xs mt-1">Budget must be at least 1000</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Start Date *</label>
+            <input formControlName="startDate" type="date" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">End Date *</label>
+            <input formControlName="endDate" type="date" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Status *</label>
+          <select formControlName="status" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="Planning">Planning</option>
+            <option value="Active">Active</option>
+            <option value="On Hold">On Hold</option>
+            <option value="Completed">Completed</option>
+          </select>
+        </div>
+
+        <div class="flex gap-4 mt-8">
+          <button type="button" (click)="closeProjectModal()" class="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-semibold">
+            Cancel
+          </button>
+          <button type="button" (click)="createProject()" [disabled]="!projectForm.valid" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors font-semibold">
+            Create Project
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Resource Modal -->
+  <div *ngIf="showResourceModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">Add Resource</h2>
+        <button (click)="closeResourceModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+      </div>
+
+      <form [formGroup]="resourceForm" class="space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Resource Name *</label>
+          <input formControlName="name" type="text" placeholder="e.g., Engineering Team" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <p *ngIf="resourceForm.get('name')?.invalid && resourceForm.get('name')?.touched" class="text-red-500 text-xs mt-1">Name must be at least 3 characters</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Resource Type *</label>
+          <select formControlName="type" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="Budget">💰 Budget</option>
+            <option value="Personnel">👥 Personnel</option>
+            <option value="Equipment">⚙️ Equipment</option>
+            <option value="Materials">📦 Materials</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Quantity *</label>
+          <input formControlName="quantity" type="number" placeholder="Enter quantity" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <p *ngIf="resourceForm.get('quantity')?.invalid && resourceForm.get('quantity')?.touched" class="text-red-500 text-xs mt-1">Quantity must be at least 1</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Allocation *</label>
+          <input formControlName="allocation" type="text" placeholder="e.g., 80%, Full-time" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div class="flex gap-4 mt-8">
+          <button type="button" (click)="closeResourceModal()" class="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-semibold">
+            Cancel
+          </button>
+          <button type="button" (click)="addResource()" [disabled]="!resourceForm.valid" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors font-semibold">
+            Add Resource
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Milestone Modal -->
+  <div *ngIf="showMilestoneModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">Add Milestone</h2>
+        <button (click)="closeMilestoneModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+      </div>
+
+      <form [formGroup]="milestoneForm" class="space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Milestone Name *</label>
+          <input formControlName="name" type="text" placeholder="e.g., Site Selection" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <p *ngIf="milestoneForm.get('name')?.invalid && milestoneForm.get('name')?.touched" class="text-red-500 text-xs mt-1">Name must be at least 3 characters</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Target Date *</label>
+          <input formControlName="date" type="date" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Status *</label>
+          <select formControlName="status" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="Not Started">Not Started</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Completed">Completed</option>
+          </select>
+        </div>
+
+        <div class="flex gap-4 mt-8">
+          <button type="button" (click)="closeMilestoneModal()" class="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-semibold">
+            Cancel
+          </button>
+          <button type="button" (click)="addMilestone()" [disabled]="!milestoneForm.valid" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors font-semibold">
+            Add Milestone
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Set Impact Modal -->
+  <div *ngIf="showImpactModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">Set Project Impact</h2>
+        <button (click)="closeImpactModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+      </div>
+
+      <form [formGroup]="impactForm" class="space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Impact Statement *</label>
+          <p class="text-xs text-gray-600 mb-2">Describe the expected positive outcomes and benefits of this project</p>
+          <textarea formControlName="impact" placeholder="e.g., Increase green space by 40%, improve air quality, reduce carbon emissions by 25%..." rows="5" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+          <p *ngIf="impactForm.get('impact')?.invalid && impactForm.get('impact')?.touched" class="text-red-500 text-xs mt-1">Impact must be at least 10 characters</p>
+        </div>
+
+        <div class="flex gap-4 mt-8">
+          <button type="button" (click)="closeImpactModal()" class="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-semibold">
+            Cancel
+          </button>
+          <button type="button" (click)="setImpact()" [disabled]="!impactForm.valid" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors font-semibold">
+            Set Impact
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

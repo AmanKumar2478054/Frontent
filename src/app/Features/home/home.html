@@ -1,0 +1,158 @@
+<div class="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-emerald-50">
+  <!-- Hero Section -->
+  <div class="relative overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-r from-green-400 to-blue-500 opacity-10"></div>
+    <div class="relative max-w-7xl mx-auto px-4 py-16 sm:px-6 sm:py-24 lg:px-8 lg:py-32">
+      <div class="text-center">
+        <h1 class="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl md:text-6xl">
+          <span class="block">Welcome to</span>
+          <span class="block text-green-600">GreenCity</span>
+        </h1>
+        <p class="mt-6 max-w-2xl mx-auto text-xl text-gray-600">
+          Building a sustainable future together. Explore our city's environmental initiatives, track progress, and join the green movement.
+        </p>
+        <div class="mt-8 flex justify-center gap-4">
+          <a routerLink="/auth/login" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 transition-colors">
+            Get Started
+          </a>
+          <a routerLink="/citizen-portal" class="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+            Citizen Portal
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sustainability Metrics -->
+  <div class="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
+    <div class="text-center mb-12">
+      <h2 class="text-3xl font-extrabold text-gray-900">Sustainability Dashboard</h2>
+      <p class="mt-4 text-lg text-gray-600">Real-time metrics showing our city's environmental progress</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div *ngFor="let metric of sustainabilityMetrics" class="bg-white rounded-xl shadow-lg p-6 border-2 hover:shadow-xl transition-shadow duration-300" [ngClass]="getMetricColor(metric.color)">
+        <div class="flex items-center justify-between mb-4">
+          <div class="text-4xl">{{ metric.icon }}</div>
+          <div class="text-right">
+            <div class="text-2xl font-bold text-gray-900">{{ metric.value }}</div>
+            <div class="text-sm font-medium text-green-600">{{ metric.change }}</div>
+          </div>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ metric.title }}</h3>
+        <p class="text-gray-600 text-sm">{{ metric.description }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Featured Projects -->
+  <div class="bg-white py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-extrabold text-gray-900">Featured Projects</h2>
+        <p class="mt-4 text-lg text-gray-600">Discover our ongoing sustainability initiatives</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div *ngFor="let project of featuredProjects" class="bg-gray-50 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
+          <div class="relative">
+            <img [src]="project.image" [alt]="project.title" class="w-full h-48 object-cover">
+            <div class="absolute top-4 right-4">
+              <span [ngClass]="getStatusColor(project.status)" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold">
+                {{ project.status }}
+              </span>
+            </div>
+          </div>
+          <div class="p-6">
+            <h3 class="text-xl font-bold text-gray-900 mb-2">{{ project.title }}</h3>
+            <p class="text-gray-600 mb-4">{{ project.description }}</p>
+            <div class="bg-green-50 p-3 rounded-lg">
+              <p class="text-sm text-green-800 font-medium">Impact: {{ project.impact }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- News & Updates -->
+  <!-- <div class="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
+    <div class="text-center mb-12">
+      <h2 class="text-3xl font-extrabold text-gray-900">Latest News & Updates</h2>
+      <p class="mt-4 text-lg text-gray-600">Stay informed about our sustainability journey</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div *ngFor="let news of recentNews" class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+        <img [src]="news.image" [alt]="news.title" class="w-full h-40 object-cover">
+        <div class="p-6">
+          <div class="text-sm text-gray-500 mb-2">{{ news.date }}</div>
+          <h3 class="text-lg font-bold text-gray-900 mb-3">{{ news.title }}</h3>
+          <p class="text-gray-600 text-sm">{{ news.summary }}</p>
+        </div>
+      </div>
+    </div>
+  </div> -->
+
+  <!-- Call to Action -->
+  <div class="bg-gradient-to-r from-green-600 to-blue-600">
+    <div class="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
+      <div class="text-center">
+        <h2 class="text-3xl font-extrabold text-white mb-4">Join Our Green Movement</h2>
+        <p class="text-xl text-green-100 mb-8 max-w-2xl mx-auto">
+          Be part of the change. Report issues, track progress, and contribute to a sustainable future.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <a routerLink="/auth/signup" class="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-green-600 bg-white hover:bg-gray-50 transition-colors">
+            Sign Up Today
+          </a>
+          <a routerLink="/citizen-portal" class="inline-flex items-center px-8 py-3 border border-white text-base font-medium rounded-md text-white hover:bg-white hover:text-green-600 transition-colors">
+            Access Citizen Portal
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-gray-900 text-white py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div class="col-span-1 md:col-span-2">
+          <h3 class="text-2xl font-bold text-green-400 mb-4">GreenCity</h3>
+          <p class="text-gray-300 mb-4">
+            Building a sustainable future for our community through innovative environmental initiatives and collaborative efforts.
+          </p>
+          <div class="flex space-x-4">
+            <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">🌱</div>
+            <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">🌊</div>
+            <div class="w-8 h-8 bg-yellow-600 rounded-full flex items-center justify-center">☀️</div>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="text-lg font-semibold mb-4">Quick Links</h4>
+          <ul class="space-y-2">
+            <li><a routerLink="/auth/login" class="text-gray-300 hover:text-white transition-colors">Login</a></li>
+            <li><a routerLink="/auth/signup" class="text-gray-300 hover:text-white transition-colors">Sign Up</a></li>
+            <li><a routerLink="/citizen-portal" class="text-gray-300 hover:text-white transition-colors">Citizen Portal</a></li>
+            <li><a routerLink="/admin" class="text-gray-300 hover:text-white transition-colors">Admin Dashboard</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="text-lg font-semibold mb-4">Contact</h4>
+          <ul class="space-y-2 text-gray-300">
+            <li>📧 info@greencity.gov</li>
+            <li>📞 (555) 123-GREEN</li>
+            <li>📍 City Hall, GreenCity</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
+        <p>&copy; 2026 GreenCity. All rights reserved. Building a sustainable future together.</p>
+      </div>
+    </div>
+  </footer>
+</div>

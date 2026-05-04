@@ -1,0 +1,233 @@
+<div class="min-h-screen bg-emerald-50 py-10 px-4 sm:px-6 lg:px-8">
+  <div class="mx-auto max-w-7xl">
+    <div class="mb-8 sm:flex sm:items-center sm:justify-between">
+      <div>
+        <h1 class="text-3xl font-extrabold tracking-tight text-emerald-900 sm:text-4xl">Welcome back, {{ userName }}</h1>
+        
+      </div>
+      <div class="mt-4 sm:mt-0">
+        <a routerLink="/auth/login" class="inline-flex items-center rounded-md border border-transparent bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2">Logout</a>
+      </div>
+    </div>
+
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div *ngFor="let card of overviewCards" class="rounded-2xl bg-white p-5 shadow-sm border border-emerald-100">
+        <div class="flex items-center justify-between">
+          <div class="text-3xl">{{ card.icon }}</div>
+          <span class="rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700">{{ card.label }}</span>
+        </div>
+        <div class="mt-6 text-4xl font-bold text-emerald-900">{{ card.value }}</div>
+      </div>
+    </div>
+
+    <div class="mt-8 grid gap-6 lg:grid-cols-3">
+      <section class="lg:col-span-2 rounded-2xl bg-white p-6 shadow-sm border border-emerald-100">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xl font-semibold text-emerald-900">Citizen Services</h2>
+        </div>
+        <div class="mt-5 space-y-4">
+          <div class="rounded-2xl border border-gray-200 bg-emerald-50 p-4">
+            <h3 class="text-lg font-semibold text-emerald-900">Sustainability dashboard</h3>
+            <p class="mt-1 text-sm text-gray-600">View your local sustainability metrics and community progress.</p>
+          </div>
+          <div (click)="openReportModal()" class="rounded-2xl border border-gray-200 bg-emerald-50 p-4 cursor-pointer hover:bg-emerald-100 transition">
+            <h3 class="text-lg font-semibold text-emerald-900">Report a city issue</h3>
+            
+          </div>
+          <div (click)="openFeedbackModal()" class="rounded-2xl border border-gray-200 bg-emerald-50 p-4 cursor-pointer hover:bg-emerald-100 transition">
+            <h3 class="text-lg font-semibold text-emerald-900">Give feedback</h3>
+            
+          </div>
+        </div>
+      </section>
+
+      <aside class="rounded-2xl bg-white p-6 shadow-sm border border-emerald-100">
+        <h2 class="text-xl font-semibold text-emerald-900">Notifications & alerts</h2>
+        <div class="mt-5 space-y-4">
+          <div *ngFor="let update of recentUpdates" class="rounded-2xl border border-gray-200 p-4">
+            <div class="flex items-center justify-between">
+              <h3 class="font-semibold text-gray-900">{{ update.title }}</h3>
+              <span class="text-sm text-gray-500">{{ update.time }}</span>
+            </div>
+            <p class="mt-2 text-sm text-gray-600">{{ update.detail }}</p>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Submitted Reports Section -->
+    <div *ngIf="submittedReports.length > 0" class="mt-8">
+      <h2 class="text-2xl font-bold text-emerald-900 mb-4">Your Submitted Reports</h2>
+      <div class="grid gap-4 lg:grid-cols-2">
+        <div *ngFor="let report of submittedReports" class="rounded-2xl bg-white p-6 shadow-sm border border-emerald-100">
+          <div class="flex items-start justify-between">
+            <div class="flex-1">
+              <div class="flex items-center gap-2">
+                <h3 class="text-lg font-semibold text-emerald-900">{{ report.issueType }}</h3>
+                <span class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">{{ report.priority }}</span>
+              </div>
+              <p class="mt-1 text-sm text-gray-600"><strong>Location:</strong> {{ report.location }}</p>
+              <p class="mt-2 text-sm text-gray-700">{{ report.description }}</p>
+              <div class="mt-4 flex items-center justify-between">
+                <span class="text-xs text-gray-500">{{ report.submittedDate }}</span>
+                <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">{{ report.status }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Feedback Modal -->
+<div *ngIf="showFeedbackModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+  <div class="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-2xl font-bold text-emerald-900">Share Your Feedback</h2>
+      <button (click)="closeFeedbackModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+    </div>
+
+    <form [formGroup]="feedbackForm" (ngSubmit)="submitFeedback()" class="space-y-4">
+      <div>
+        <label for="title" class="block text-sm font-medium text-gray-700">Feedback Title</label>
+        <input id="title" type="text" formControlName="title"
+               class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+               placeholder="Brief title for your feedback">
+        <div *ngIf="feedbackForm.get('title')?.invalid && feedbackForm.get('title')?.touched" class="mt-1 text-sm text-red-600">
+          <span *ngIf="feedbackForm.get('title')?.errors?.['required']">Title is required.</span>
+          <span *ngIf="feedbackForm.get('title')?.errors?.['minlength']">Title must be at least 5 characters.</span>
+        </div>
+      </div>
+
+      <div>
+        <label for="category" class="block text-sm font-medium text-gray-700">Category</label>
+        <select id="category" formControlName="category"
+                class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500">
+          <option value="General">General</option>
+          <option value="Sustainability">Sustainability</option>
+          <option value="Services">Services</option>
+          <option value="Infrastructure">Infrastructure</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="message" class="block text-sm font-medium text-gray-700">Your Feedback</label>
+        <textarea id="message" formControlName="message" rows="4"
+                  class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  placeholder="Share your detailed feedback..."></textarea>
+        <div *ngIf="feedbackForm.get('message')?.invalid && feedbackForm.get('message')?.touched" class="mt-1 text-sm text-red-600">
+          <span *ngIf="feedbackForm.get('message')?.errors?.['required']">Feedback is required.</span>
+          <span *ngIf="feedbackForm.get('message')?.errors?.['minlength']">Feedback must be at least 10 characters.</span>
+        </div>
+      </div>
+
+      <div>
+        <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+        <input id="email" type="email" formControlName="email"
+               class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+               placeholder="your.email@example.com">
+        <div *ngIf="feedbackForm.get('email')?.invalid && feedbackForm.get('email')?.touched" class="mt-1 text-sm text-red-600">
+          <span *ngIf="feedbackForm.get('email')?.errors?.['required']">Email is required.</span>
+          <span *ngIf="feedbackForm.get('email')?.errors?.['email']">Enter a valid email.</span>
+        </div>
+      </div>
+
+      <div class="flex gap-3 pt-4">
+        <button type="button" (click)="closeFeedbackModal()"
+                class="flex-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+          Cancel
+        </button>
+        <button type="submit" [disabled]="feedbackForm.invalid"
+                class="flex-1 rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:bg-gray-400">
+          Submit Feedback
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Report Modal -->
+<div *ngIf="showReportModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+  <div class="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-2xl font-bold text-emerald-900">Report a City Issue</h2>
+      <button (click)="closeReportModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+    </div>
+
+    <form [formGroup]="reportForm" (ngSubmit)="submitReport()" class="space-y-4">
+      <div>
+        <label for="issueType" class="block text-sm font-medium text-gray-700">Issue Type</label>
+        <select id="issueType" formControlName="issueType"
+                class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500">
+          <option value="">Select an issue type</option>
+          <option value="Street Lights">Street Lights</option>
+          <option value="Waste Pickup">Waste Pickup</option>
+          <option value="Public Safety">Public Safety</option>
+          <option value="Pothole">Pothole</option>
+          <option value="Pollution">Pollution</option>
+          <option value="Tree Damage">Tree Damage</option>
+          <option value="Other">Other</option>
+        </select>
+        <div *ngIf="reportForm.get('issueType')?.invalid && reportForm.get('issueType')?.touched" class="mt-1 text-sm text-red-600">
+          <span *ngIf="reportForm.get('issueType')?.errors?.['required']">Please select an issue type.</span>
+        </div>
+      </div>
+
+      <div>
+        <label for="location" class="block text-sm font-medium text-gray-700">Location</label>
+        <input id="location" type="text" formControlName="location"
+               class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+               placeholder="Street address or location">
+        <div *ngIf="reportForm.get('location')?.invalid && reportForm.get('location')?.touched" class="mt-1 text-sm text-red-600">
+          <span *ngIf="reportForm.get('location')?.errors?.['required']">Location is required.</span>
+          <span *ngIf="reportForm.get('location')?.errors?.['minlength']">Location must be at least 5 characters.</span>
+        </div>
+      </div>
+
+      <div>
+        <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+        <textarea id="description" formControlName="description" rows="4"
+                  class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  placeholder="Describe the issue in detail..."></textarea>
+        <div *ngIf="reportForm.get('description')?.invalid && reportForm.get('description')?.touched" class="mt-1 text-sm text-red-600">
+          <span *ngIf="reportForm.get('description')?.errors?.['required']">Description is required.</span>
+          <span *ngIf="reportForm.get('description')?.errors?.['minlength']">Description must be at least 10 characters.</span>
+        </div>
+      </div>
+
+      <div>
+        <label for="priority" class="block text-sm font-medium text-gray-700">Priority</label>
+        <select id="priority" formControlName="priority"
+                class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500">
+          <option value="Low">Low</option>
+          <option value="Medium">Medium</option>
+          <option value="High">High</option>
+          <option value="Urgent">Urgent</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="contactEmail" class="block text-sm font-medium text-gray-700">Contact Email</label>
+        <input id="contactEmail" type="email" formControlName="contactEmail"
+               class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+               placeholder="your.email@example.com">
+        <div *ngIf="reportForm.get('contactEmail')?.invalid && reportForm.get('contactEmail')?.touched" class="mt-1 text-sm text-red-600">
+          <span *ngIf="reportForm.get('contactEmail')?.errors?.['required']">Email is required.</span>
+          <span *ngIf="reportForm.get('contactEmail')?.errors?.['email']">Enter a valid email.</span>
+        </div>
+      </div>
+
+      <div class="flex gap-3 pt-4">
+        <button type="button" (click)="closeReportModal()"
+                class="flex-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+          Cancel
+        </button>
+        <button type="submit" [disabled]="reportForm.invalid"
+                class="flex-1 rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:bg-gray-400">
+          Submit Report
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
