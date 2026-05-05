@@ -1,30 +1,37 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import {
+  ImpactResponseDto,
+  MilestoneResponseDto,
+  ProjectResponseDto,
+  ProjectService,
+  ResourceResponseDto,
+} from '../../Service/project.service';
 
 interface Milestone {
-  id: string;
+  id: number;
   name: string;
   date: string;
-  status: 'Not Started' | 'In Progress' | 'Completed';
+  status: 'PENDING' | 'MET' | 'MISSED' | 'DEFERRED';
 }
 
 interface Resource {
-  id: string;
+  id: number;
   name: string;
-  type: 'Budget' | 'Personnel' | 'Equipment' | 'Materials';
+  type: string;
   quantity: number;
   allocation: string;
 }
 
 interface Project {
-  id: string;
+  id: number;
   name: string;
   description: string;
   category: string;
   budget: number;
-  status: 'Planning' | 'Active' | 'On Hold' | 'Completed';
+  status: 'PLANNED' | 'ACTIVE' | 'ON_HOLD' | 'COMPLETED' | 'CANCELLED';
   startDate: string;
   endDate: string;
   impact: string;
@@ -39,7 +46,7 @@ interface Project {
   templateUrl: './city-planner.html',
   styleUrl: './city-planner.css',
 })
-export class CityPlanner {
+export class CityPlanner implements OnInit {
   projects: Project[] = [];
   projectForm!: FormGroup;
   resourceForm!: FormGroup;
@@ -61,72 +68,79 @@ export class CityPlanner {
     totalBudget: 0,
   };
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: FormBuilder, private projectService: ProjectService) {
     this.initializeForms();
-    this.loadSampleData();
+  }
+
+  ngOnInit(): void {
+    this.loadProjects();
   }
 
   initializeForms(): void {
     this.projectForm = this.fb.group({
-      name: ['', [Validators.required, Validators.minLength(3)]],
+      title: ['', [Validators.required, Validators.minLength(3)]],
       description: ['', [Validators.required, Validators.minLength(10)]],
-      category: ['', Validators.required],
       budget: ['', [Validators.required, Validators.min(1000)]],
-      status: ['Planning', Validators.required],
+      status: ['PLANNED', Validators.required],
       startDate: ['', Validators.required],
       endDate: ['', Validators.required],
     });
 
     this.resourceForm = this.fb.group({
-      name: ['', [Validators.required, Validators.minLength(3)]],
-      type: ['Budget', Validators.required],
-      quantity: ['', [Validators.required, Validators.min(1)]],
-      allocation: ['', Validators.required],
+      type: ['', [Validators.required, Validators.minLength(2)]],
+      location: ['', [Validators.required, Validators.minLength(3)]],
+      capacity: ['', [Validators.required, Validators.min(0)]],
+      status: ['AVAILABLE', Validators.required],
     });
 
     this.milestoneForm = this.fb.group({
-      name: ['', [Validators.required, Validators.minLength(3)]],
-      date: ['', Validators.required],
-      status: ['Not Started', Validators.required],
+      title: ['', [Validators.required, Validators.minLength(3)]],
+      milestoneDate: ['', Validators.required],
+      status: ['PENDING', Validators.required],
     });
 
     this.impactForm = this.fb.group({
       impact: ['', [Validators.required, Validators.minLength(10)]],
+      recordedDate: ['', Validators.required],
+      status: ['DRAFT', Validators.required],
     });
   }
 
-  loadSampleData(): void {
-    this.projects = [
-      {
-        id: '1',
-        name: 'Urban Green Space Initiative',
-        description: 'Create new parks and green spaces across the city',
-        category: 'Environment',
-        budget: 500000,
-        status: 'Active',
-        startDate: '2026-01-15',
-        endDate: '2026-12-31',
-        impact: 'Increase green space by 40%, improve air quality',
-        milestones: [
-          { id: '1', name: 'Site Selection', date: '2026-02-28', status: 'Completed' },
-          { id: '2', name: 'Design Planning', date: '2026-04-30', status: 'In Progress' },
-          { id: '3', name: 'Construction', date: '2026-08-31', status: 'Not Started' },
-        ],
-        resources: [
-          { id: '1', name: 'Budget Allocation', type: 'Budget', quantity: 500000, allocation: '100%' },
-          { id: '2', name: 'Engineering Team', type: 'Personnel', quantity: 15, allocation: '80%' },
-        ],
-        progress: 35,
+  loadProjects(): void {
+    this.projectService.getProjects().subscribe({
+      next: (projects: ProjectResponseDto[]) => {
+        this.projects = projects.map((project: ProjectResponseDto) => this.mapProject(project));
+        this.updateProjectStats();
       },
-    ];
-    this.updateProjectStats();
+      error: (error: unknown) => {
+        console.error('Failed to load projects', error);
+        this.projects = [];
+      },
+    });
+  }
+
+  private mapProject(project: ProjectResponseDto): Project {
+    return {
+      id: project.projectId,
+      name: project.title,
+      description: project.description,
+      category: 'N/A',
+      budget: Number(project.budget ?? 0),
+      status: project.status,
+      startDate: project.startDate,
+      endDate: project.endDate,
+      impact: '',
+      milestones: [],
+      resources: [],
+      progress: 0,
+    };
   }
 
   updateProjectStats(): void {
     this.projectStats = {
       total: this.projects.length,
-      active: this.projects.filter(p => p.status === 'Active').length,
-      completed: this.projects.filter(p => p.status === 'Completed').length,
+      active: this.projects.filter(p => p.status === 'ACTIVE').length,
+      completed: this.projects.filter(p => p.status === 'COMPLETED').length,
       totalBudget: this.projects.reduce((sum, p) => sum + p.budget, 0),
     };
   }
@@ -143,27 +157,82 @@ export class CityPlanner {
 
   createProject(): void {
     if (this.projectForm.valid) {
-      const newProject: Project = {
-        id: Date.now().toString(),
-        ...this.projectForm.value,
-        impact: '',
-        milestones: [],
-        resources: [],
-        progress: 0,
-      };
-      this.projects.push(newProject);
-      this.updateProjectStats();
-      this.closeProjectModal();
+      this.projectService.createProject(this.projectForm.value).subscribe({
+        next: (response: ProjectResponseDto) => {
+          this.projects.push(this.mapProject(response));
+          this.updateProjectStats();
+          this.closeProjectModal();
+        },
+        error: (error: unknown) => {
+          console.error('Failed to create project', error);
+          alert('Failed to create project');
+        },
+      });
     }
   }
 
   selectProject(project: Project): void {
     this.selectedProject = project;
     this.activeTab = 'overview';
+    this.loadProjectDetails(project.id);
   }
 
   closeProjectDetails(): void {
     this.selectedProject = null;
+  }
+
+  private loadProjectDetails(projectId: number): void {
+    this.loadProjectMilestones(projectId);
+    this.loadProjectResources(projectId);
+    this.loadProjectImpacts(projectId);
+  }
+
+  private loadProjectMilestones(projectId: number): void {
+    this.projectService.getMilestonesByProject(projectId).subscribe({
+      next: (milestones: MilestoneResponseDto[]) => {
+        if (!this.selectedProject || this.selectedProject.id !== projectId) return;
+        this.selectedProject.milestones = milestones.map((m) => ({
+          id: m.milestoneId,
+          name: m.title,
+          date: m.milestoneDate,
+          status: m.status,
+        }));
+        this.updateProjectProgress();
+      },
+      error: (error: unknown) => console.error('Failed to load milestones', error),
+    });
+  }
+
+  private loadProjectResources(projectId: number): void {
+    this.projectService.getResources(projectId).subscribe({
+      next: (resources: ResourceResponseDto[]) => {
+        if (!this.selectedProject || this.selectedProject.id !== projectId) return;
+        this.selectedProject.resources = resources.map((r) => ({
+          id: r.resourceId,
+          name: r.location,
+          type: r.type,
+          quantity: r.capacity,
+          allocation: r.status,
+        }));
+      },
+      error: (error: unknown) => console.error('Failed to load resources', error),
+    });
+  }
+
+  private loadProjectImpacts(projectId: number): void {
+    this.projectService.getImpactsByProject(projectId).subscribe({
+      next: (impacts: ImpactResponseDto[]) => {
+        if (!this.selectedProject || this.selectedProject.id !== projectId) return;
+        const latestImpact = impacts[impacts.length - 1];
+        if (!latestImpact) {
+          this.selectedProject.impact = '';
+          return;
+        }
+        const statement = latestImpact.metricsJson?.['statement'];
+        this.selectedProject.impact = typeof statement === 'string' ? statement : JSON.stringify(latestImpact.metricsJson);
+      },
+      error: (error: unknown) => console.error('Failed to load impacts', error),
+    });
   }
 
   openResourceModal(): void {
@@ -180,16 +249,24 @@ export class CityPlanner {
 
   addResource(): void {
     if (this.resourceForm.valid && this.selectedProject) {
-      const newResource: Resource = {
-        id: Date.now().toString(),
+      const payload = {
+        projectId: this.selectedProject.id,
         ...this.resourceForm.value,
       };
-      this.selectedProject.resources.push(newResource);
-      this.closeResourceModal();
+      this.projectService.createResource(payload).subscribe({
+        next: () => {
+          this.loadProjectResources(this.selectedProject!.id);
+          this.closeResourceModal();
+        },
+        error: (error: unknown) => {
+          console.error('Failed to add resource', error);
+          alert('Failed to add resource');
+        },
+      });
     }
   }
 
-  deleteResource(resourceId: string): void {
+  deleteResource(resourceId: number): void {
     if (this.selectedProject) {
       this.selectedProject.resources = this.selectedProject.resources.filter(r => r.id !== resourceId);
     }
@@ -209,28 +286,35 @@ export class CityPlanner {
 
   addMilestone(): void {
     if (this.milestoneForm.valid && this.selectedProject) {
-      const newMilestone: Milestone = {
-        id: Date.now().toString(),
+      const payload = {
+        projectId: this.selectedProject.id,
         ...this.milestoneForm.value,
       };
-      this.selectedProject.milestones.push(newMilestone);
-      this.updateProjectProgress();
-      this.closeMilestoneModal();
+      this.projectService.createMilestone(payload).subscribe({
+        next: () => {
+          this.loadProjectMilestones(this.selectedProject!.id);
+          this.closeMilestoneModal();
+        },
+        error: (error: unknown) => {
+          console.error('Failed to add milestone', error);
+          alert('Failed to add milestone');
+        },
+      });
     }
   }
 
-  deleteMilestone(milestoneId: string): void {
+  deleteMilestone(milestoneId: number): void {
     if (this.selectedProject) {
       this.selectedProject.milestones = this.selectedProject.milestones.filter(m => m.id !== milestoneId);
       this.updateProjectProgress();
     }
   }
 
-  updateMilestoneStatus(milestoneId: string, status: string): void {
+  updateMilestoneStatus(milestoneId: number, status: string): void {
     if (this.selectedProject) {
       const milestone = this.selectedProject.milestones.find(m => m.id === milestoneId);
       if (milestone) {
-        milestone.status = status as 'Not Started' | 'In Progress' | 'Completed';
+        milestone.status = status as 'PENDING' | 'MET' | 'MISSED' | 'DEFERRED';
         this.updateProjectProgress();
       }
     }
@@ -238,7 +322,11 @@ export class CityPlanner {
 
   openImpactModal(): void {
     if (this.selectedProject) {
-      this.impactForm.patchValue({ impact: this.selectedProject.impact });
+      this.impactForm.patchValue({
+        impact: this.selectedProject.impact,
+        recordedDate: new Date().toISOString().slice(0, 10),
+        status: 'DRAFT',
+      });
       this.showImpactModal = true;
     }
   }
@@ -249,14 +337,28 @@ export class CityPlanner {
 
   setImpact(): void {
     if (this.impactForm.valid && this.selectedProject) {
-      this.selectedProject.impact = this.impactForm.value.impact;
-      this.closeImpactModal();
+      const payload = {
+        projectId: this.selectedProject.id,
+        metricsJson: { statement: this.impactForm.value.impact },
+        recordedDate: this.impactForm.value.recordedDate,
+        status: this.impactForm.value.status,
+      };
+      this.projectService.createImpact(payload).subscribe({
+        next: () => {
+          this.selectedProject!.impact = this.impactForm.value.impact;
+          this.closeImpactModal();
+        },
+        error: (error: unknown) => {
+          console.error('Failed to set impact', error);
+          alert('Failed to set impact');
+        },
+      });
     }
   }
 
   updateProjectProgress(): void {
     if (this.selectedProject && this.selectedProject.milestones.length > 0) {
-      const completed = this.selectedProject.milestones.filter(m => m.status === 'Completed').length;
+      const completed = this.selectedProject.milestones.filter(m => m.status === 'MET').length;
       this.selectedProject.progress = Math.round((completed / this.selectedProject.milestones.length) * 100);
     }
   }
@@ -264,11 +366,15 @@ export class CityPlanner {
   getStatusColor(status: string): string {
     const colors: { [key: string]: string } = {
       'Active': 'bg-green-100 text-green-800',
-      'Planning': 'bg-blue-100 text-blue-800',
-      'Completed': 'bg-purple-100 text-purple-800',
-      'On Hold': 'bg-yellow-100 text-yellow-800',
-      'In Progress': 'bg-cyan-100 text-cyan-800',
-      'Not Started': 'bg-gray-100 text-gray-800',
+      'ACTIVE': 'bg-green-100 text-green-800',
+      'PLANNED': 'bg-blue-100 text-blue-800',
+      'COMPLETED': 'bg-purple-100 text-purple-800',
+      'ON_HOLD': 'bg-yellow-100 text-yellow-800',
+      'CANCELLED': 'bg-red-100 text-red-800',
+      'PENDING': 'bg-gray-100 text-gray-800',
+      'MET': 'bg-green-100 text-green-800',
+      'MISSED': 'bg-red-100 text-red-800',
+      'DEFERRED': 'bg-yellow-100 text-yellow-800',
     };
     return colors[status] || 'bg-gray-100 text-gray-800';
   }
