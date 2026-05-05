@@ -34,11 +34,12 @@ export class AuthService {
   }
 
   saveRole(role: string) {
-    localStorage.setItem('role', role);
+    localStorage.setItem('role', this.normalizeRole(role));
   }
 
   getRole(): string | null {
-    return localStorage.getItem('role');
+    const role = localStorage.getItem('role');
+    return role ? this.normalizeRole(role) : null;
   }
  
   getToken(): string | null {
@@ -55,7 +56,18 @@ export class AuthService {
   }
 
   hasRole(expectedRole: string): boolean {
-    return this.getRole() === expectedRole;
+    return this.getRole() === this.normalizeRole(expectedRole);
+  }
+
+  normalizeRole(role: string): string {
+    const cleanRole = role.trim().replace(/^ROLE_/i, '').toUpperCase().replace(/\s+/g, '_');
+    const roleAliases: Record<string, string> = {
+      ADMINISTRATOR: 'ADMIN',
+      CITY_PLANNER: 'PLANNER',
+      COMPLIANCE_OFFICER: 'COMPLIANCE',
+      GOVERNMENT_AUDITOR: 'AUDITOR',
+    };
+    return roleAliases[cleanRole] || cleanRole;
   }
 
 }

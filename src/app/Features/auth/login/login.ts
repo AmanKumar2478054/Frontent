@@ -4,6 +4,8 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../Service/auth.service';
 import { loginUser } from '../../../core/models/loginUser'; 
+import { AuthResponse } from '../../../core/models/AuthResponse';
+import { UserDetails } from '../../../core/models/user-details';
 @Component({
   selector: 'app-login',
   standalone: true,
@@ -37,13 +39,13 @@ export class Login {
     console.log('Sending to API:', userData);
 
     this.authService.loginUser(userData).subscribe({
-      next: (response) => {
+      next: (response: AuthResponse) => {
         console.log('API Response:', response);
         if (response && response.accessToken) {
           console.log('Login successful, token received:', response.accessToken);
           this.authService.saveToken(response.accessToken);
           this.authService.getUserByEmail(this.loginForm.value.email).subscribe({
-            next: (userDetails) => {
+            next: (userDetails: UserDetails) => {
               const role = userDetails?.role || 'Citizen';
               this.authService.saveRole(role);
               this.navigateToDashboard(role);
@@ -55,7 +57,7 @@ export class Login {
           });
         }
       },
-      error: (err) => {
+      error: (err: any) => {
        
         console.error('HTTP Error Details:', err);
         alert('Login failed: ' + (err.error?.message || 'Server unreachable'));
@@ -65,15 +67,16 @@ export class Login {
 }
 
   navigateToDashboard(role: string) {
+    const normalizedRole = this.authService.normalizeRole(role);
     const roleRoutes: { [key: string]: string } = {
-      'Citizen': '/citizen-portal',
-      'Administrator': '/admin',
-      'City Planner': '/city-planner',
-      'Compliance Officer': '/compliance-officer',
-      'Government Auditor': '/government-auditor'
+      CITIZEN: '/citizen-portal',
+      ADMIN: '/admin',
+      PLANNER: '/city-planner',
+      COMPLIANCE: '/compliance-officer',
+      AUDITOR: '/government-auditor'
     };
 
-    const route = roleRoutes[role] || '/citizen-portal';
+    const route = roleRoutes[normalizedRole] || '/citizen-portal';
     this.router.navigate([route]);
   }
 }
