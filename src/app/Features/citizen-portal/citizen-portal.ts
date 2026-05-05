@@ -1,7 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { CitizenService } from '../../Service/citizen.service';
+import { CitizenReport } from '../../core/models/citizen-report';
+import { Feedback } from '../../core/models/feedback';
+import { AuthService } from '../../Service/auth.service';
 
 @Component({
   selector: 'app-citizen-portal',
@@ -10,13 +14,16 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
   templateUrl: './citizen-portal.html',
   styleUrl: './citizen-portal.css',
 })
-export class CitizenPortal {
-  userName = 'Alex';
+export class CitizenPortal implements OnInit {
+  userName = 'Citizen';
   feedbackForm: FormGroup;
   reportForm: FormGroup;
   showFeedbackModal = false;
   showReportModal = false;
-  submittedReports: any[] = [];
+  submittedReports: CitizenReport[] = [];
+  submittedFeedbacks: Feedback[] = [];
+  loadingReports = false;
+  loadingFeedbacks = false;
 
   overviewCards = [
     { label: 'Open Requests', value: 3, icon: '📬' },
@@ -28,20 +35,26 @@ export class CitizenPortal {
     { title: 'New recycling pickup policy', detail: 'Check changes for the next pickup cycle.', time: 'This week' }
   ];
 
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder,
+    private citizenService: CitizenService,
+    private authService: AuthService
+  ) {
     this.feedbackForm = this.fb.group({
-      title: ['', [Validators.required, Validators.minLength(5)]],
-      category: ['General', Validators.required],
-      message: ['', [Validators.required, Validators.minLength(10)]],
-      email: ['', [Validators.required, Validators.email]]
+      category: ['Waste', Validators.required],
+      comments: ['', [Validators.required, Validators.minLength(10)]],
+      status: ['OPEN', Validators.required]
     });
     this.reportForm = this.fb.group({
-      issueType: ['', Validators.required],
+      type: ['POLLUTION', Validators.required],
       location: ['', [Validators.required, Validators.minLength(5)]],
-      description: ['', [Validators.required, Validators.minLength(10)]],
-      priority: ['Medium', Validators.required],
-      contactEmail: ['', [Validators.required, Validators.email]]
+      status: ['OPEN', Validators.required]
     });
+  }
+
+  ngOnInit(): void {
+    this.loadMyReports();
+    this.loadMyFeedbacks();
   }
 
   openFeedbackModal() {
@@ -50,14 +63,22 @@ export class CitizenPortal {
 
   closeFeedbackModal() {
     this.showFeedbackModal = false;
-    this.feedbackForm.reset();
+    this.feedbackForm.reset({ category: 'Waste', comments: '', status: 'OPEN' });
   }
 
   submitFeedback() {
     if (this.feedbackForm.valid) {
-      console.log('Feedback submitted:', this.feedbackForm.value);
-      alert('Thank you for your feedback!');
-      this.closeFeedbackModal();
+      this.citizenService.createFeedback(this.feedbackForm.value).subscribe({
+        next: () => {
+          alert('Thank you for your feedback!');
+          this.loadMyFeedbacks();
+          this.closeFeedbackModal();
+        },
+        error: (err) => {
+          console.error('Feedback submission failed', err);
+          alert('Failed to submit feedback.');
+        }
+      });
     }
   }
 
@@ -67,21 +88,54 @@ export class CitizenPortal {
 
   closeReportModal() {
     this.showReportModal = false;
-    this.reportForm.reset();
+    this.reportForm.reset({ type: 'POLLUTION', location: '', status: 'OPEN' });
   }
 
   submitReport() {
     if (this.reportForm.valid) {
-      const newReport = {
-        id: Date.now(),
-        ...this.reportForm.value,
-        status: 'Submitted',
-        submittedDate: new Date().toLocaleDateString()
-      };
-      this.submittedReports.unshift(newReport);
-      console.log('Report submitted:', newReport);
-      alert('Your report has been submitted successfully!');
-      this.closeReportModal();
+      this.citizenService.createReport(this.reportForm.value).subscribe({
+        next: () => {
+          alert('Your report has been submitted successfully!');
+          this.loadMyReports();
+          this.closeReportModal();
+        },
+        error: (err) => {
+          console.error('Report submission failed', err);
+          alert('Failed to submit report.');
+        }
+      });
     }
+  }
+
+  private loadMyReports() {
+    this.loadingReports = true;
+    this.citizenService.getMyReports().subscribe({
+      next: (reports) => {
+        this.submittedReports = reports ?? [];
+        this.loadingReports = false;
+      },
+      error: () => {
+        this.submittedReports = [];
+        this.loadingReports = false;
+      }
+    });
+  }
+
+  private loadMyFeedbacks() {
+    this.loadingFeedbacks = true;
+    this.citizenService.getMyFeedbacks().subscribe({
+      next: (feedbacks) => {
+        this.submittedFeedbacks = feedbacks ?? [];
+        this.loadingFeedbacks = false;
+      },
+      error: () => {
+        this.submittedFeedbacks = [];
+        this.loadingFeedbacks = false;
+      }
+    });
+  }
+
+  logout() {
+    this.authService.logout();
   }
 }

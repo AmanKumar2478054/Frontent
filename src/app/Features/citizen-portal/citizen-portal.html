@@ -6,7 +6,7 @@
         
       </div>
       <div class="mt-4 sm:mt-0">
-        <a routerLink="/auth/login" class="inline-flex items-center rounded-md border border-transparent bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2">Logout</a>
+        <a routerLink="/auth/login" (click)="logout()" class="inline-flex items-center rounded-md border border-transparent bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2">Logout</a>
       </div>
     </div>
 
@@ -56,21 +56,41 @@
     </div>
 
     <!-- Submitted Reports Section -->
-    <div *ngIf="submittedReports.length > 0" class="mt-8">
+    <div class="mt-8">
       <h2 class="text-2xl font-bold text-emerald-900 mb-4">Your Submitted Reports</h2>
+      <div *ngIf="loadingReports" class="text-sm text-gray-500 mb-3">Loading your reports...</div>
+      <div *ngIf="!loadingReports && submittedReports.length === 0" class="text-sm text-gray-500 mb-3">No reports submitted yet.</div>
       <div class="grid gap-4 lg:grid-cols-2">
         <div *ngFor="let report of submittedReports" class="rounded-2xl bg-white p-6 shadow-sm border border-emerald-100">
           <div class="flex items-start justify-between">
             <div class="flex-1">
               <div class="flex items-center gap-2">
-                <h3 class="text-lg font-semibold text-emerald-900">{{ report.issueType }}</h3>
-                <span class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">{{ report.priority }}</span>
+                <h3 class="text-lg font-semibold text-emerald-900">{{ report.type }}</h3>
               </div>
               <p class="mt-1 text-sm text-gray-600"><strong>Location:</strong> {{ report.location }}</p>
-              <p class="mt-2 text-sm text-gray-700">{{ report.description }}</p>
               <div class="mt-4 flex items-center justify-between">
-                <span class="text-xs text-gray-500">{{ report.submittedDate }}</span>
+                <span class="text-xs text-gray-500">{{ report.date | date:'medium' }}</span>
                 <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">{{ report.status }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-8">
+      <h2 class="text-2xl font-bold text-emerald-900 mb-4">Your Submitted Feedbacks</h2>
+      <div *ngIf="loadingFeedbacks" class="text-sm text-gray-500 mb-3">Loading your feedbacks...</div>
+      <div *ngIf="!loadingFeedbacks && submittedFeedbacks.length === 0" class="text-sm text-gray-500 mb-3">No feedbacks submitted yet.</div>
+      <div class="grid gap-4 lg:grid-cols-2">
+        <div *ngFor="let feedback of submittedFeedbacks" class="rounded-2xl bg-white p-6 shadow-sm border border-emerald-100">
+          <div class="flex items-start justify-between">
+            <div class="flex-1">
+              <h3 class="text-lg font-semibold text-emerald-900">{{ feedback.category }}</h3>
+              <p class="mt-2 text-sm text-gray-700">{{ feedback.comments }}</p>
+              <div class="mt-4 flex items-center justify-between">
+                <span class="text-xs text-gray-500">{{ feedback.date | date:'mediumDate' }}</span>
+                <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">{{ feedback.status }}</span>
               </div>
             </div>
           </div>
@@ -90,47 +110,33 @@
 
     <form [formGroup]="feedbackForm" (ngSubmit)="submitFeedback()" class="space-y-4">
       <div>
-        <label for="title" class="block text-sm font-medium text-gray-700">Feedback Title</label>
-        <input id="title" type="text" formControlName="title"
-               class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
-               placeholder="Brief title for your feedback">
-        <div *ngIf="feedbackForm.get('title')?.invalid && feedbackForm.get('title')?.touched" class="mt-1 text-sm text-red-600">
-          <span *ngIf="feedbackForm.get('title')?.errors?.['required']">Title is required.</span>
-          <span *ngIf="feedbackForm.get('title')?.errors?.['minlength']">Title must be at least 5 characters.</span>
-        </div>
-      </div>
-
-      <div>
         <label for="category" class="block text-sm font-medium text-gray-700">Category</label>
         <select id="category" formControlName="category"
-                class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500">
-          <option value="General">General</option>
-          <option value="Sustainability">Sustainability</option>
-          <option value="Services">Services</option>
-          <option value="Infrastructure">Infrastructure</option>
+               class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+          <option value="Waste">Waste</option>
+          <option value="Energy">Energy</option>
+          <option value="Water">Water</option>
         </select>
       </div>
 
       <div>
-        <label for="message" class="block text-sm font-medium text-gray-700">Your Feedback</label>
-        <textarea id="message" formControlName="message" rows="4"
+        <label for="comments" class="block text-sm font-medium text-gray-700">Your Feedback</label>
+        <textarea id="comments" formControlName="comments" rows="4"
                   class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   placeholder="Share your detailed feedback..."></textarea>
-        <div *ngIf="feedbackForm.get('message')?.invalid && feedbackForm.get('message')?.touched" class="mt-1 text-sm text-red-600">
-          <span *ngIf="feedbackForm.get('message')?.errors?.['required']">Feedback is required.</span>
-          <span *ngIf="feedbackForm.get('message')?.errors?.['minlength']">Feedback must be at least 10 characters.</span>
+        <div *ngIf="feedbackForm.get('comments')?.invalid && feedbackForm.get('comments')?.touched" class="mt-1 text-sm text-red-600">
+          <span *ngIf="feedbackForm.get('comments')?.errors?.['required']">Feedback is required.</span>
+          <span *ngIf="feedbackForm.get('comments')?.errors?.['minlength']">Feedback must be at least 10 characters.</span>
         </div>
       </div>
 
       <div>
-        <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-        <input id="email" type="email" formControlName="email"
-               class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
-               placeholder="your.email@example.com">
-        <div *ngIf="feedbackForm.get('email')?.invalid && feedbackForm.get('email')?.touched" class="mt-1 text-sm text-red-600">
-          <span *ngIf="feedbackForm.get('email')?.errors?.['required']">Email is required.</span>
-          <span *ngIf="feedbackForm.get('email')?.errors?.['email']">Enter a valid email.</span>
-        </div>
+        <label for="feedbackStatus" class="block text-sm font-medium text-gray-700">Status</label>
+        <select id="feedbackStatus" formControlName="status"
+                class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500">
+          <option value="OPEN">OPEN</option>
+        </select>
       </div>
 
       <div class="flex gap-3 pt-4">
@@ -157,20 +163,16 @@
 
     <form [formGroup]="reportForm" (ngSubmit)="submitReport()" class="space-y-4">
       <div>
-        <label for="issueType" class="block text-sm font-medium text-gray-700">Issue Type</label>
-        <select id="issueType" formControlName="issueType"
+        <label for="type" class="block text-sm font-medium text-gray-700">Issue Type</label>
+        <select id="type" formControlName="type"
                 class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500">
-          <option value="">Select an issue type</option>
-          <option value="Street Lights">Street Lights</option>
-          <option value="Waste Pickup">Waste Pickup</option>
-          <option value="Public Safety">Public Safety</option>
-          <option value="Pothole">Pothole</option>
-          <option value="Pollution">Pollution</option>
-          <option value="Tree Damage">Tree Damage</option>
-          <option value="Other">Other</option>
+          <option value="POLLUTION">Pollution</option>
+          <option value="WASTE">Waste</option>
+          <option value="ENERGY">Energy</option>
+          <option value="WATER">Water</option>
         </select>
-        <div *ngIf="reportForm.get('issueType')?.invalid && reportForm.get('issueType')?.touched" class="mt-1 text-sm text-red-600">
-          <span *ngIf="reportForm.get('issueType')?.errors?.['required']">Please select an issue type.</span>
+        <div *ngIf="reportForm.get('type')?.invalid && reportForm.get('type')?.touched" class="mt-1 text-sm text-red-600">
+          <span *ngIf="reportForm.get('type')?.errors?.['required']">Please select an issue type.</span>
         </div>
       </div>
 
@@ -186,36 +188,11 @@
       </div>
 
       <div>
-        <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
-        <textarea id="description" formControlName="description" rows="4"
-                  class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  placeholder="Describe the issue in detail..."></textarea>
-        <div *ngIf="reportForm.get('description')?.invalid && reportForm.get('description')?.touched" class="mt-1 text-sm text-red-600">
-          <span *ngIf="reportForm.get('description')?.errors?.['required']">Description is required.</span>
-          <span *ngIf="reportForm.get('description')?.errors?.['minlength']">Description must be at least 10 characters.</span>
-        </div>
-      </div>
-
-      <div>
-        <label for="priority" class="block text-sm font-medium text-gray-700">Priority</label>
-        <select id="priority" formControlName="priority"
+        <label for="reportStatus" class="block text-sm font-medium text-gray-700">Status</label>
+        <select id="reportStatus" formControlName="status"
                 class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500">
-          <option value="Low">Low</option>
-          <option value="Medium">Medium</option>
-          <option value="High">High</option>
-          <option value="Urgent">Urgent</option>
+          <option value="OPEN">OPEN</option>
         </select>
-      </div>
-
-      <div>
-        <label for="contactEmail" class="block text-sm font-medium text-gray-700">Contact Email</label>
-        <input id="contactEmail" type="email" formControlName="contactEmail"
-               class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
-               placeholder="your.email@example.com">
-        <div *ngIf="reportForm.get('contactEmail')?.invalid && reportForm.get('contactEmail')?.touched" class="mt-1 text-sm text-red-600">
-          <span *ngIf="reportForm.get('contactEmail')?.errors?.['required']">Email is required.</span>
-          <span *ngIf="reportForm.get('contactEmail')?.errors?.['email']">Enter a valid email.</span>
-        </div>
       </div>
 
       <div class="flex gap-3 pt-4">

@@ -1,9 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../Service/auth.service';
-import { User } from '../../../core/models/user'; 
 import { loginUser } from '../../../core/models/loginUser'; 
 @Component({
   selector: 'app-login',
@@ -12,42 +11,19 @@ import { loginUser } from '../../../core/models/loginUser';
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
-export class Login implements OnInit {
+export class Login {
   loginForm: FormGroup;
-  selectedRole: string = 'Citizen';
-  roles = ['Citizen', 'City Planner', 'Administrator', 'Compliance Officer', 'Government Auditor'];
 
   constructor(
     private fb: FormBuilder, 
     private router: Router, 
-    private route: ActivatedRoute, 
     private authService: AuthService
   ) {
     this.loginForm = this.fb.group({
       
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required]],
-      role: ['Citizen', Validators.required]
+      password: ['', [Validators.required]]
     });
-  }
-
-  ngOnInit() {
-    this.route.queryParams.subscribe(params => {
-      const role = params['role'];
-      if (role && this.roles.includes(role)) {
-        this.selectedRole = role;
-        this.loginForm.patchValue({ role: role });
-      }
-    });
-  }
-
-  onRoleChange(newRole: string) {
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { role: newRole },
-      queryParamsHandling: 'merge'
-    });
-    this.loginForm.patchValue({ role: newRole });
   }
 
   onSubmit() {
@@ -66,8 +42,17 @@ export class Login implements OnInit {
         if (response && response.accessToken) {
           console.log('Login successful, token received:', response.accessToken);
           this.authService.saveToken(response.accessToken);
-          localStorage.setItem('role', this.loginForm.value.role);
-          this.navigateToDashboard(this.loginForm.value.role);
+          this.authService.getUserByEmail(this.loginForm.value.email).subscribe({
+            next: (userDetails) => {
+              const role = userDetails?.role || 'Citizen';
+              this.authService.saveRole(role);
+              this.navigateToDashboard(role);
+            },
+            error: () => {
+              this.authService.saveRole('Citizen');
+              this.navigateToDashboard('Citizen');
+            }
+          });
         }
       },
       error: (err) => {

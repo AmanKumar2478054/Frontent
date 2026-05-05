@@ -1,7 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../Service/auth.service';
 @Component({
   selector: 'app-signup',
@@ -9,44 +9,16 @@ import { AuthService } from '../../../Service/auth.service';
   imports: [CommonModule, ReactiveFormsModule, RouterModule],
   templateUrl: './signup.html',
 })
-export class Signup implements OnInit {
+export class Signup {
   signupForm: FormGroup;
-  selectedRole: string = 'Citizen';
-  roles = ['Citizen', 'City Planner', 'Administrator', 'Compliance Officer', 'Government Auditor'];
 
-  constructor(private fb: FormBuilder, private router: Router, private route: ActivatedRoute , private AuthService:AuthService) {
+  constructor(private fb: FormBuilder, private router: Router, private AuthService:AuthService) {
     this.signupForm = this.fb.group({
   name: ['', [Validators.required, Validators.minLength(3)]],
   email: ['', [Validators.required, Validators.email]],
   phone: ['', [Validators.required, Validators.pattern('^[0-9]{10}$')]],
-  role: ['Citizen', Validators.required],
   password: ['', [Validators.required, Validators.minLength(6)]]
 });
-  }
-
-  ngOnInit() {
-    this.route.queryParams.subscribe(params => {
-      const role = params['role'];
-      if (role && this.roles.includes(role)) {
-        this.selectedRole = role;
-        this.signupForm.patchValue({ Role: role });
-        this.loadDataForRole(role);
-      }
-    });
-  }
-
-  onRoleChange(newRole: string) {
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { role: newRole },
-      queryParamsHandling: 'merge'
-    });
-    this.signupForm.patchValue({ Role: newRole });
-  }
-
-  loadDataForRole(role: string) {
-    console.log('Fetching data for:', role);
-    this.selectedRole = role;
   }
 
   // onSubmit() {

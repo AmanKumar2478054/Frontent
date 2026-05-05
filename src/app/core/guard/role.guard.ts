@@ -12,10 +12,10 @@ export const roleGuard: CanActivateFn = (route, state) => {
     return false;
   }
 
-//   if (expectedRole && !authService.hasRole(expectedRole)) {
-//     router.navigate(['/not-found']);
-//     return false;
-//   }
+  if (expectedRole && !authService.hasRole(expectedRole)) {
+    router.navigate(['/not-found']);
+    return false;
+  }
 
   return true;
 };
