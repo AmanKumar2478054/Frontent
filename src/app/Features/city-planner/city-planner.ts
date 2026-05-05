@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { AuthService } from '../../Service/auth.service';
 import {
   ImpactResponseDto,
   MilestoneResponseDto,
@@ -68,7 +69,7 @@ export class CityPlanner implements OnInit {
     totalBudget: 0,
   };
 
-  constructor(private fb: FormBuilder, private projectService: ProjectService) {
+  constructor(private fb: FormBuilder, private projectService: ProjectService, private authService: AuthService) {
     this.initializeForms();
   }
 
@@ -387,5 +388,9 @@ export class CityPlanner implements OnInit {
       'Materials': '📦',
     };
     return icons[type] || '📋';
+  }
+
+  logout(): void {
+    this.authService.logout();
   }
 }
