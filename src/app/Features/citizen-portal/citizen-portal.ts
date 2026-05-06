@@ -6,6 +6,8 @@ import { CitizenService } from '../../Service/citizen.service';
 import { CitizenReport } from '../../core/models/citizen-report';
 import { Feedback } from '../../core/models/feedback';
 import { TopNavbar } from '../../core/components/top-navbar/top-navbar';
+import { NotificationService } from '../../Service/notification.service';
+import { NotificationItem } from '../../interfaces/notification.interface';
 
 @Component({
   selector: 'app-citizen-portal',
@@ -24,20 +26,18 @@ export class CitizenPortal implements OnInit, AfterViewInit {
   submittedFeedbacks: Feedback[] = [];
   loadingReports = false;
   loadingFeedbacks = false;
+  loadingNotifications = false;
 
   overviewCards = [
     { label: 'Open Requests', value: 3, icon: '📬' },
     { label: 'Notifications', value: 5, icon: '🔔' }
   ];
-  recentUpdates = [
-    { title: 'Water usage report ready', detail: 'Review your monthly water usage for April.', time: 'Today' },
-    { title: 'Community meeting scheduled', detail: 'Join the event on sustainable transport.', time: 'Tomorrow' },
-    { title: 'New recycling pickup policy', detail: 'Check changes for the next pickup cycle.', time: 'This week' }
-  ];
+  recentUpdates: NotificationItem[] = [];
 
   constructor(
     private fb: FormBuilder,
     private citizenService: CitizenService,
+    private notificationService: NotificationService,
     private cdr: ChangeDetectorRef
   ) {
     this.feedbackForm = this.fb.group({
@@ -64,6 +64,7 @@ export class CitizenPortal implements OnInit, AfterViewInit {
   private fetchInitialData(): void {
     this.loadMyReports();
     this.loadMyFeedbacks();
+    this.loadMyNotifications();
   }
 
   openFeedbackModal() {
@@ -145,6 +146,27 @@ export class CitizenPortal implements OnInit, AfterViewInit {
         this.loadingFeedbacks = false;
         this.cdr.detectChanges();
       }
+    });
+  }
+
+  private loadMyNotifications() {
+    this.loadingNotifications = true;
+    this.notificationService.getMyNotifications().subscribe({
+      next: (notifications: NotificationItem[]) => {
+        this.recentUpdates = (notifications ?? []).slice(0, 4);
+        this.overviewCards = this.overviewCards.map((card) =>
+          card.label === 'Notifications'
+            ? { ...card, value: this.recentUpdates.length }
+            : card
+        );
+        this.loadingNotifications = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.recentUpdates = [];
+        this.loadingNotifications = false;
+        this.cdr.detectChanges();
+      },
     });
   }
 }

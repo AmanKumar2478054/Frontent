@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 import { AuthService } from '../../Service/auth.service';
 import { CitizenReport } from '../../core/models/citizen-report';
 import { Feedback } from '../../core/models/feedback';
@@ -42,6 +42,7 @@ export class AdminReport implements OnInit {
   resourceTypeItems: ChartItem[] = [];
   feedbackCategoryItems: ChartItem[] = [];
   summaryTiles: SummaryTile[] = [];
+  loadError = '';
 
   constructor(private http: HttpClient, private authService: AuthService) {}
 
@@ -57,17 +58,35 @@ export class AdminReport implements OnInit {
   loadReport(): void {
     const headers = this.getAuthHeaders();
     this.loading = true;
+    this.loadError = '';
     forkJoin({
-      reports: this.http.get<CitizenReport[]>(`${this.baseUrl}/citizen/all`, { headers }),
-      feedbacks: this.http.get<Feedback[]>(`${this.baseUrl}/feedback/all`, { headers }),
-      users: this.http.get<UserResponse[]>(`${this.baseUrl}/users`, { headers }),
-      projects: this.http.get<ProjectResponseDto[]>(`${this.baseUrl}/projects`, { headers }),
-      resources: this.http.get<ResourceResponseDto[]>(`${this.baseUrl}/resources`, { headers }),
-      complianceRecords: this.http.get<ComplianceRecordResponse[]>(`${this.baseUrl}/compliance`, { headers }),
+      reports: this.http.get<CitizenReport[]>(`${this.baseUrl}/citizen/all`, { headers }).pipe(catchError(() => of([] as CitizenReport[]))),
+      feedbacks: this.http.get<Feedback[]>(`${this.baseUrl}/feedback/all`, { headers }).pipe(catchError(() => of([] as Feedback[]))),
+      users: this.http.get<UserResponse[]>(`${this.baseUrl}/users`, { headers }).pipe(catchError(() => of([] as UserResponse[]))),
+      projects: this.http.get<ProjectResponseDto[]>(`${this.baseUrl}/projects`, { headers }).pipe(catchError(() => of([] as ProjectResponseDto[]))),
+      resources: this.http.get<ResourceResponseDto[]>(`${this.baseUrl}/resources`, { headers }).pipe(catchError(() => of([] as ResourceResponseDto[]))),
+      complianceRecords: this.http.get<ComplianceRecordResponse[]>(`${this.baseUrl}/compliance`, { headers }).pipe(catchError(() => of([] as ComplianceRecordResponse[]))),
     }).subscribe({
-      next: ({ reports, feedbacks, users, projects, resources, complianceRecords }) => {
+      next: ({
+        reports,
+        feedbacks,
+        users,
+        projects,
+        resources,
+        complianceRecords,
+      }: {
+        reports: CitizenReport[];
+        feedbacks: Feedback[];
+        users: UserResponse[];
+        projects: ProjectResponseDto[];
+        resources: ResourceResponseDto[];
+        complianceRecords: ComplianceRecordResponse[];
+      }) => {
         const citizensCount = (users ?? []).filter((user: UserResponse) => (user.role ?? '').toUpperCase().includes('CITIZEN')).length;
-        const totalResourceCapacity = (resources ?? []).reduce((sum, resource) => sum + Number(resource.capacity ?? 0), 0);
+        const totalResourceCapacity = (resources ?? []).reduce(
+          (sum: number, resource: ResourceResponseDto) => sum + Number(resource.capacity ?? 0),
+          0
+        );
         this.summaryTiles = [
           { label: 'Total Citizens', value: citizensCount.toString(), caption: 'Registered citizen accounts' },
           { label: 'Total Reports', value: (reports?.length ?? 0).toString(), caption: 'All citizen issue reports' },
@@ -106,6 +125,13 @@ export class AdminReport implements OnInit {
       },
       error: (error: unknown) => {
         console.error('Failed to generate admin report', error);
+        this.loadError = 'Report generation failed. Please verify API services are running.';
+        this.summaryTiles = [
+          { label: 'Total Citizens', value: '0', caption: 'Registered citizen accounts' },
+          { label: 'Total Reports', value: '0', caption: 'All citizen issue reports' },
+          { label: 'Total Feedback', value: '0', caption: 'Citizen feedback submissions' },
+          { label: 'Resource Capacity', value: '0', caption: 'Aggregated resource capacity' },
+        ];
         this.loading = false;
       },
     });

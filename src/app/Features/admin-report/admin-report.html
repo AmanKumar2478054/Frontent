@@ -15,6 +15,9 @@
     <div *ngIf="loading" class="rounded-xl bg-white p-4 text-sm text-slate-600 shadow ring-1 ring-slate-200">
       Generating report...
     </div>
+    <div *ngIf="!loading && loadError" class="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+      {{ loadError }}
+    </div>
 
     <div *ngIf="!loading" class="space-y-6">
       <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

@@ -39,13 +39,17 @@
 
       <aside class="rounded-2xl bg-white p-6 shadow-sm border border-emerald-100">
         <h2 class="text-xl font-semibold text-emerald-900">Notifications & alerts</h2>
+        <div *ngIf="loadingNotifications" class="mt-3 text-sm text-gray-500">Loading notifications...</div>
         <div class="mt-5 space-y-4">
           <div *ngFor="let update of recentUpdates" class="rounded-2xl border border-gray-200 p-4">
             <div class="flex items-center justify-between">
-              <h3 class="font-semibold text-gray-900">{{ update.title }}</h3>
-              <span class="text-sm text-gray-500">{{ update.time }}</span>
+              <h3 class="font-semibold text-gray-900">{{ update.category || 'Notification' }}</h3>
+              <span class="text-sm text-gray-500">{{ update.createdDate | date:'short' }}</span>
             </div>
-            <p class="mt-2 text-sm text-gray-600">{{ update.detail }}</p>
+            <p class="mt-2 text-sm text-gray-600">{{ update.message }}</p>
+          </div>
+          <div *ngIf="!loadingNotifications && recentUpdates.length === 0" class="text-sm text-gray-500">
+            No notifications available.
           </div>
         </div>
       </aside>
