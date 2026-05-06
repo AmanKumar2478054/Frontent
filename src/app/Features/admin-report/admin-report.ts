@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { catchError, finalize, forkJoin, Observable, of, tap, timeout } from 'rxjs';
@@ -44,7 +44,7 @@ export class AdminReport implements OnInit {
   summaryTiles: SummaryTile[] = [];
   loadError = '';
 
-  constructor(private http: HttpClient, private authService: AuthService) {}
+  constructor(private http: HttpClient, private authService: AuthService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.loadReport();
@@ -86,6 +86,7 @@ export class AdminReport implements OnInit {
       finalize(() => {
         this.loading = false;
         console.log('[AdminReport] Report generation finished');
+        this.cdr.detectChanges();
       })
     ).subscribe({
       next: ({
@@ -149,6 +150,7 @@ export class AdminReport implements OnInit {
           feedbackCategoryItems: this.feedbackCategoryItems,
           summaryTiles: this.summaryTiles,
         });
+        this.cdr.detectChanges();
       },
       error: (error: unknown) => {
         console.error('Failed to generate admin report', error);
@@ -159,6 +161,7 @@ export class AdminReport implements OnInit {
           { label: 'Total Feedback', value: '0', caption: 'Citizen feedback submissions' },
           { label: 'Resource Capacity', value: '0', caption: 'Aggregated resource capacity' },
         ];
+        this.cdr.detectChanges();
       },
     });
   }
