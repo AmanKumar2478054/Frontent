@@ -1,6 +1,33 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { forkJoin } from 'rxjs';
+import { AuthService } from '../../Service/auth.service';
+import { CitizenReport } from '../../core/models/citizen-report';
+import { Feedback } from '../../core/models/feedback';
+import { ProjectResponseDto, ResourceResponseDto } from '../../Service/project.service';
+import { ComplianceRecordResponse } from '../../Service/compliance.service';
+
+interface UserResponse {
+  userId: number;
+  name: string;
+  email: string;
+  role: string;
+  status?: string;
+}
+
+interface StatCard {
+  label: string;
+  value: number;
+  icon: string;
+}
+
+interface ChartItem {
+  label: string;
+  value: number;
+  color: string;
+}
 
 @Component({
   selector: 'app-admin',
@@ -9,123 +36,86 @@ import { RouterModule } from '@angular/router';
   templateUrl: './admin.html',
   styleUrl: './admin.css',
 })
-export class Admin {
+export class Admin implements OnInit {
   adminName = 'Admin User';
+  loading = true;
+  chartVisible = false;
+  readonly baseUrl = 'http://localhost:8082/api';
 
-  // Dashboard statistics
-  stats = [
-    { label: 'Total Reports', value: 24, icon: '📋', change: '+12%', trend: 'up' },
-    { label: 'Pending Reviews', value: 8, icon: '⏳', change: '+3', trend: 'up' },
-    { label: 'Resolved Issues', value: 16, icon: '✅', change: '+8', trend: 'up' },
-    { label: 'Active Users', value: 156, icon: '👥', change: '+23', trend: 'up' }
+  stats: StatCard[] = [
+    { label: 'Total Reports', value: 0, icon: '📋' },
+    { label: 'Total Citizens', value: 0, icon: '👥' },
+    { label: 'Total Projects', value: 0, icon: '🏗️' },
+    { label: 'Compliance Records', value: 0, icon: '✅' },
   ];
 
-  // Recent reports (simulated data)
-  recentReports = [
-    {
-      id: 1,
-      issueType: 'Street Lights',
-      location: '123 Main Street, Downtown',
-      description: 'The street light at the corner has been out for three days.',
-      priority: 'High',
-      status: 'Pending',
-      submittedDate: '2026-04-28',
-      submittedBy: 'alex.citizen@greencity.gov'
-    },
-    {
-      id: 2,
-      issueType: 'Waste Pickup',
-      location: '456 Oak Avenue',
-      description: 'Garbage not collected this week, bin overflowing.',
-      priority: 'Medium',
-      status: 'In Progress',
-      submittedDate: '2026-04-27',
-      submittedBy: 'sarah.resident@greencity.gov'
-    },
-    {
-      id: 3,
-      issueType: 'Pothole',
-      location: '789 Pine Street',
-      description: 'Large pothole causing vehicle damage.',
-      priority: 'High',
-      status: 'Resolved',
-      submittedDate: '2026-04-26',
-      submittedBy: 'mike.driver@greencity.gov'
-    }
-  ];
+  recentReports: CitizenReport[] = [];
+  recentFeedback: Feedback[] = [];
+  chartItems: ChartItem[] = [];
+  maxChartValue = 0;
 
-  // Recent feedback
-  recentFeedback = [
-    {
-      id: 1,
-      title: 'Improve recycling program',
-      category: 'Sustainability',
-      message: 'The current recycling program is great, but we could improve it by adding more collection points.',
-      submittedBy: 'alex.citizen@greencity.gov',
-      submittedDate: '2026-04-28',
-      status: 'New'
-    },
-    {
-      id: 2,
-      title: 'Better public transport',
-      category: 'Services',
-      message: 'The bus schedule needs to be more frequent during peak hours.',
-      submittedBy: 'sarah.resident@greencity.gov',
-      submittedDate: '2026-04-27',
-      status: 'Reviewed'
-    }
-  ];
+  constructor(private http: HttpClient, private authService: AuthService) {}
 
-  // System status
-  systemStatus = [
-    { component: 'Report Submission', status: 'Operational', uptime: '99.9%' },
-    { component: 'Feedback System', status: 'Operational', uptime: '99.8%' },
-    { component: 'User Authentication', status: 'Operational', uptime: '100%' },
-    { component: 'Database', status: 'Operational', uptime: '99.9%' }
-  ];
-
-  getStatusColor(status: string): string {
-    switch (status) {
-      case 'Operational': return 'text-green-600';
-      case 'Pending': return 'text-yellow-600';
-      case 'In Progress': return 'text-blue-600';
-      case 'Resolved': return 'text-green-600';
-      case 'New': return 'text-blue-600';
-      case 'Reviewed': return 'text-gray-600';
-      default: return 'text-gray-600';
-    }
+  ngOnInit(): void {
+    this.loadDashboard();
   }
 
-  getPriorityColor(priority: string): string {
-    switch (priority) {
-      case 'High': return 'bg-red-100 text-red-800';
-      case 'Medium': return 'bg-yellow-100 text-yellow-800';
-      case 'Low': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+  private getAuthHeaders(): HttpHeaders {
+    const token = this.authService.getToken();
+    return new HttpHeaders({
+      Authorization: token ? `Bearer ${token}` : '',
+    });
   }
 
-  updateReportStatus(reportId: number, newStatus: string) {
-    const report = this.recentReports.find(r => r.id === reportId);
-    if (report) {
-      report.status = newStatus;
-    }
+  private loadDashboard(): void {
+    this.loading = true;
+    const headers = this.getAuthHeaders();
+
+    forkJoin({
+      reports: this.http.get<CitizenReport[]>(`${this.baseUrl}/citizen/all`, { headers }),
+      feedbacks: this.http.get<Feedback[]>(`${this.baseUrl}/feedback/all`, { headers }),
+      users: this.http.get<UserResponse[]>(`${this.baseUrl}/users`, { headers }),
+      projects: this.http.get<ProjectResponseDto[]>(`${this.baseUrl}/projects`, { headers }),
+      resources: this.http.get<ResourceResponseDto[]>(`${this.baseUrl}/resources`, { headers }),
+      complianceRecords: this.http.get<ComplianceRecordResponse[]>(`${this.baseUrl}/compliance`, { headers }),
+    }).subscribe({
+      next: ({ reports, feedbacks, users, projects, resources, complianceRecords }) => {
+        const sortedReports = [...(reports ?? [])].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        const sortedFeedbacks = [...(feedbacks ?? [])].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        const citizensCount = (users ?? []).filter((user) => (user.role ?? '').toUpperCase().includes('CITIZEN')).length;
+
+        this.recentReports = sortedReports.slice(0, 4);
+        this.recentFeedback = sortedFeedbacks.slice(0, 3);
+        this.stats = [
+          { label: 'Total Reports', value: reports?.length ?? 0, icon: '📋' },
+          { label: 'Total Citizens', value: citizensCount, icon: '👥' },
+          { label: 'Total Projects', value: projects?.length ?? 0, icon: '🏗️' },
+          { label: 'Compliance Records', value: complianceRecords?.length ?? 0, icon: '✅' },
+        ];
+        this.chartItems = [
+          { label: 'Projects', value: projects?.length ?? 0, color: 'from-blue-500 to-blue-700' },
+          { label: 'Resources', value: resources?.length ?? 0, color: 'from-emerald-500 to-emerald-700' },
+          { label: 'Compliance Records', value: complianceRecords?.length ?? 0, color: 'from-purple-500 to-purple-700' },
+        ];
+        this.maxChartValue = Math.max(1, ...this.chartItems.map((item) => item.value));
+        this.loading = false;
+      },
+      error: (error: unknown) => {
+        console.error('Failed to load admin dashboard data', error);
+        this.loading = false;
+      },
+    });
   }
 
-  updateFeedbackStatus(feedbackId: number, newStatus: string) {
-    const feedback = this.recentFeedback.find(f => f.id === feedbackId);
-    if (feedback) {
-      feedback.status = newStatus;
-    }
+  showGeneratedReport(): void {
+    this.chartVisible = true;
   }
 
-  onReportStatusChange(reportId: number, event: Event) {
-    const target = event.target as HTMLSelectElement;
-    this.updateReportStatus(reportId, target.value);
+  getBarWidth(value: number): number {
+    return Math.max(10, Math.round((value / this.maxChartValue) * 100));
   }
 
-  onFeedbackStatusChange(feedbackId: number, event: Event) {
-    const target = event.target as HTMLSelectElement;
-    this.updateFeedbackStatus(feedbackId, target.value);
+  logout(): void {
+    this.authService.logout();
   }
 }
