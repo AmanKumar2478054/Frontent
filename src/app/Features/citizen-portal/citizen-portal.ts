@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -14,7 +14,7 @@ import { AuthService } from '../../Service/auth.service';
   templateUrl: './citizen-portal.html',
   styleUrl: './citizen-portal.css',
 })
-export class CitizenPortal implements OnInit {
+export class CitizenPortal implements OnInit, AfterViewInit {
   userName = 'Citizen';
   feedbackForm: FormGroup;
   reportForm: FormGroup;
@@ -38,7 +38,8 @@ export class CitizenPortal implements OnInit {
   constructor(
     private fb: FormBuilder,
     private citizenService: CitizenService,
-    private authService: AuthService
+    private authService: AuthService,
+    private cdr: ChangeDetectorRef
   ) {
     this.feedbackForm = this.fb.group({
       category: ['Waste', Validators.required],
@@ -53,6 +54,15 @@ export class CitizenPortal implements OnInit {
   }
 
   ngOnInit(): void {
+    this.fetchInitialData();
+  }
+
+  ngAfterViewInit(): void {
+    // Keep one deferred fetch after first render to avoid route-transition timing races.
+    queueMicrotask(() => this.fetchInitialData());
+  }
+
+  private fetchInitialData(): void {
     this.loadMyReports();
     this.loadMyFeedbacks();
   }
@@ -74,7 +84,7 @@ export class CitizenPortal implements OnInit {
           this.loadMyFeedbacks();
           this.closeFeedbackModal();
         },
-        error: (err) => {
+        error: (err: unknown) => {
           console.error('Feedback submission failed', err);
           alert('Failed to submit feedback.');
         }
@@ -99,7 +109,7 @@ export class CitizenPortal implements OnInit {
           this.loadMyReports();
           this.closeReportModal();
         },
-        error: (err) => {
+        error: (err: unknown) => {
           console.error('Report submission failed', err);
           alert('Failed to submit report.');
         }
@@ -110,13 +120,15 @@ export class CitizenPortal implements OnInit {
   private loadMyReports() {
     this.loadingReports = true;
     this.citizenService.getMyReports().subscribe({
-      next: (reports) => {
+      next: (reports: CitizenReport[]) => {
         this.submittedReports = reports ?? [];
         this.loadingReports = false;
+        this.cdr.detectChanges();
       },
       error: () => {
         this.submittedReports = [];
         this.loadingReports = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -124,13 +136,15 @@ export class CitizenPortal implements OnInit {
   private loadMyFeedbacks() {
     this.loadingFeedbacks = true;
     this.citizenService.getMyFeedbacks().subscribe({
-      next: (feedbacks) => {
+      next: (feedbacks: Feedback[]) => {
         this.submittedFeedbacks = feedbacks ?? [];
         this.loadingFeedbacks = false;
+        this.cdr.detectChanges();
       },
       error: () => {
         this.submittedFeedbacks = [];
         this.loadingFeedbacks = false;
+        this.cdr.detectChanges();
       }
     });
   }

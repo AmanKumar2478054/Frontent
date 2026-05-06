@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -16,7 +16,7 @@ import { ProjectResponseDto, ResourceResponseDto } from '../../Service/project.s
   templateUrl: './compliance-officer.html',
   styleUrl: './compliance-officer.css',
 })
-export class ComplianceOfficer {
+export class ComplianceOfficer implements OnInit {
   projects: ProjectResponseDto[] = [];
   resources: ResourceResponseDto[] = [];
   myComplianceRecords: ComplianceRecordResponse[] = [];
@@ -31,7 +31,8 @@ export class ComplianceOfficer {
   constructor(
     private complianceService: ComplianceService,
     private authService: AuthService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private cdr: ChangeDetectorRef
   ) {
     this.complianceForm = this.fb.group({
       result: ['', [Validators.required, Validators.minLength(2)]],
@@ -49,10 +50,12 @@ export class ComplianceOfficer {
     this.complianceService.getAllProjects().subscribe({
       next: (projects: ProjectResponseDto[]) => {
         this.projects = projects;
+        this.cdr.detectChanges();
       },
       error: (error: unknown) => {
         console.error('Failed to load projects', error);
         this.projects = [];
+        this.cdr.detectChanges();
       },
     });
   }
@@ -62,10 +65,12 @@ export class ComplianceOfficer {
     this.complianceService.getResourcesByProject(project.projectId).subscribe({
       next: (resources: ResourceResponseDto[]) => {
         this.resources = resources;
+        this.cdr.detectChanges();
       },
       error: (error: unknown) => {
         console.error('Failed to load resources', error);
         this.resources = [];
+        this.cdr.detectChanges();
       },
     });
   }
@@ -126,10 +131,12 @@ export class ComplianceOfficer {
     this.complianceService.getMyComplianceRecords().subscribe({
       next: (records: ComplianceRecordResponse[]) => {
         this.myComplianceRecords = records;
+        this.cdr.detectChanges();
       },
       error: (error: unknown) => {
         console.error('Failed to load my compliance records', error);
         this.myComplianceRecords = [];
+        this.cdr.detectChanges();
       },
     });
   }

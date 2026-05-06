@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -69,7 +69,7 @@ export class CityPlanner implements OnInit {
     totalBudget: 0,
   };
 
-  constructor(private fb: FormBuilder, private projectService: ProjectService, private authService: AuthService) {
+  constructor(private fb: FormBuilder, private projectService: ProjectService, private authService: AuthService, private cdr: ChangeDetectorRef) {
     this.initializeForms();
   }
 
@@ -112,10 +112,12 @@ export class CityPlanner implements OnInit {
       next: (projects: ProjectResponseDto[]) => {
         this.projects = projects.map((project: ProjectResponseDto) => this.mapProject(project));
         this.updateProjectStats();
+        this.cdr.detectChanges();
       },
       error: (error: unknown) => {
         console.error('Failed to load projects', error);
         this.projects = [];
+        this.cdr.detectChanges();
       },
     });
   }
