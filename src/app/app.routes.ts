@@ -30,8 +30,7 @@ export const routes: Routes = [
   {
     path: 'admin/report',
     component: AdminReport,
-    canActivate: [authGuard, roleGuard],
-    data: { role: 'ADMIN' },
+    canActivate: [authGuard],
   },
   {
     path: 'city-planner',

@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { AuthService } from './auth.service';
 
 export interface ProjectRequestDto {
   title: string;
@@ -58,54 +57,37 @@ export class ProjectService {
   private projectBaseUrl = 'http://localhost:8082/api/projects';
   private resourceBaseUrl = 'http://localhost:8082/api/resources';
 
-  constructor(private http: HttpClient, private authService: AuthService) {}
-
-  private getAuthHeaders(): HttpHeaders {
-    const token = this.authService.getToken();
-    return new HttpHeaders({
-      Authorization: token ? `Bearer ${token}` : '',
-    });
-  }
+  constructor(private http: HttpClient) {}
 
   getProjects(): Observable<ProjectResponseDto[]> {
-    return this.http.get<ProjectResponseDto[]>(this.projectBaseUrl, { headers: this.getAuthHeaders() });
+    return this.http.get<ProjectResponseDto[]>(this.projectBaseUrl);
   }
 
   createProject(payload: ProjectRequestDto): Observable<ProjectResponseDto> {
-    return this.http.post<ProjectResponseDto>(this.projectBaseUrl, payload, { headers: this.getAuthHeaders() });
+    return this.http.post<ProjectResponseDto>(this.projectBaseUrl, payload);
   }
 
   getMilestonesByProject(projectId: number): Observable<MilestoneResponseDto[]> {
-    return this.http.get<MilestoneResponseDto[]>(`${this.projectBaseUrl}/${projectId}/milestones`, {
-      headers: this.getAuthHeaders(),
-    });
+    return this.http.get<MilestoneResponseDto[]>(`${this.projectBaseUrl}/${projectId}/milestones`);
   }
 
   createMilestone(payload: MilestoneRequestDto): Observable<MilestoneResponseDto> {
-    return this.http.post<MilestoneResponseDto>(`${this.projectBaseUrl}/milestones`, payload, {
-      headers: this.getAuthHeaders(),
-    });
+    return this.http.post<MilestoneResponseDto>(`${this.projectBaseUrl}/milestones`, payload);
   }
 
   getImpactsByProject(projectId: number): Observable<ImpactResponseDto[]> {
-    return this.http.get<ImpactResponseDto[]>(`${this.projectBaseUrl}/${projectId}/impacts`, {
-      headers: this.getAuthHeaders(),
-    });
+    return this.http.get<ImpactResponseDto[]>(`${this.projectBaseUrl}/${projectId}/impacts`);
   }
 
   createImpact(payload: ImpactRequestDto): Observable<ImpactResponseDto> {
-    return this.http.post<ImpactResponseDto>(`${this.projectBaseUrl}/impacts`, payload, {
-      headers: this.getAuthHeaders(),
-    });
+    return this.http.post<ImpactResponseDto>(`${this.projectBaseUrl}/impacts`, payload);
   }
 
   getResources(projectId: number): Observable<ResourceResponseDto[]> {
-    return this.http.get<ResourceResponseDto[]>(`${this.resourceBaseUrl}?projectId=${projectId}`, {
-      headers: this.getAuthHeaders(),
-    });
+    return this.http.get<ResourceResponseDto[]>(`${this.resourceBaseUrl}?projectId=${projectId}`);
   }
 
   createResource(payload: ResourceCreateRequestDto): Observable<ResourceResponseDto> {
-    return this.http.post<ResourceResponseDto>(this.resourceBaseUrl, payload, { headers: this.getAuthHeaders() });
+    return this.http.post<ResourceResponseDto>(this.resourceBaseUrl, payload);
   }
 }

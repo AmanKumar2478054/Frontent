@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { AuthService } from './auth.service';
 import { ProjectResponseDto, ResourceResponseDto } from './project.service';
 
 export interface ComplianceRecordCreateRequest {
@@ -30,32 +29,22 @@ export class ComplianceService {
   private projectsBaseUrl = 'http://localhost:8082/api/projects';
   private resourcesBaseUrl = 'http://localhost:8082/api/resources';
 
-  constructor(private http: HttpClient, private authService: AuthService) {}
-
-  private getAuthHeaders(): HttpHeaders {
-    const token = this.authService.getToken();
-    return new HttpHeaders({
-      Authorization: token ? `Bearer ${token}` : '',
-    });
-  }
+  constructor(private http: HttpClient) {}
 
   getAllProjects(): Observable<ProjectResponseDto[]> {
-    return this.http.get<ProjectResponseDto[]>(this.projectsBaseUrl, { headers: this.getAuthHeaders() });
+    return this.http.get<ProjectResponseDto[]>(this.projectsBaseUrl);
   }
 
   getResourcesByProject(projectId: number): Observable<ResourceResponseDto[]> {
-    return this.http.get<ResourceResponseDto[]>(`${this.resourcesBaseUrl}?projectId=${projectId}`, {
-      headers: this.getAuthHeaders(),
-    });
+    return this.http.get<ResourceResponseDto[]>(`${this.resourcesBaseUrl}?projectId=${projectId}`);
   }
 
   createComplianceRecord(payload: ComplianceRecordCreateRequest): Observable<ComplianceRecordResponse> {
-    return this.http.post<ComplianceRecordResponse>(this.complianceBaseUrl, payload, { headers: this.getAuthHeaders() });
+    return this.http.post<ComplianceRecordResponse>(this.complianceBaseUrl, payload);
   }
 
   getMyComplianceRecords(): Observable<ComplianceRecordResponse[]> {
-    const headers = this.getAuthHeaders();
-    console.log('[ComplianceService] GET /mine called. Has auth token:', !!this.authService.getToken());
-    return this.http.get<ComplianceRecordResponse[]>(`${this.complianceBaseUrl}/mine`, { headers });
+    console.log('[ComplianceService] GET /mine called');
+    return this.http.get<ComplianceRecordResponse[]>(`${this.complianceBaseUrl}/mine`);
   }
 }

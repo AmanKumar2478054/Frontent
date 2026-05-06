@@ -1,6 +1,6 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CitizenService } from '../../Service/citizen.service';
 import { CitizenReport } from '../../core/models/citizen-report';
@@ -38,6 +38,7 @@ export class CitizenPortal implements OnInit, AfterViewInit {
     private fb: FormBuilder,
     private citizenService: CitizenService,
     private notificationService: NotificationService,
+    private router: Router,
     private cdr: ChangeDetectorRef
   ) {
     this.feedbackForm = this.fb.group({
@@ -69,6 +70,10 @@ export class CitizenPortal implements OnInit, AfterViewInit {
 
   openFeedbackModal() {
     this.showFeedbackModal = true;
+  }
+
+  openSustainabilityDashboard() {
+    this.router.navigate(['/admin/report']);
   }
 
   closeFeedbackModal() {

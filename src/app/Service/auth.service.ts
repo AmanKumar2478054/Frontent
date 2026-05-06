@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { User } from '../core/models/user'
 import { Observable } from 'rxjs';
 import { AuthResponse } from '../core/models/AuthResponse'
@@ -23,11 +23,7 @@ export class AuthService {
     return this.http.post<AuthResponse>(`${this.baseUrl}/login`, user);
   }
   getUserByEmail(email: string): Observable<UserDetails> {
-    const token = this.getToken();
-    const headers = new HttpHeaders({
-      Authorization: token ? `Bearer ${token}` : '',
-    });
-    return this.http.get<UserDetails>(`${this.userBaseUrl}/username/${email}`, { headers });
+    return this.http.get<UserDetails>(`${this.userBaseUrl}/username/${email}`);
   }
    saveToken(token: string) {
     localStorage.setItem('token', token);

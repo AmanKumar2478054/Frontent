@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { AuthService } from './auth.service';
@@ -13,13 +13,6 @@ export class NotificationService {
   private notificationsBaseUrl = 'http://localhost:8082/api/notifications';
 
   constructor(private http: HttpClient, private authService: AuthService) {}
-
-  private getAuthHeaders(): HttpHeaders {
-    const token = this.authService.getToken();
-    return new HttpHeaders({
-      Authorization: token ? `Bearer ${token}` : '',
-    });
-  }
 
   private getEmailFromToken(): string | null {
     const token = this.authService.getToken();
@@ -42,10 +35,7 @@ export class NotificationService {
 
     return this.authService.getUserByEmail(email).pipe(
       switchMap((user: UserDetails) =>
-        this.http.get<NotificationItem[]>(
-          `${this.notificationsBaseUrl}/user/${user.userId}`,
-          { headers: this.getAuthHeaders() }
-        )
+        this.http.get<NotificationItem[]>(`${this.notificationsBaseUrl}/user/${user.userId}`)
       ),
       map((notifications: NotificationItem[]) =>
         [...(notifications ?? [])].sort(

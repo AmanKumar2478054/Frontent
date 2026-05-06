@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CitizenReport, CitizenReportCreateRequest } from '../core/models/citizen-report';
 import { Feedback, FeedbackCreateRequest } from '../core/models/feedback';
-import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root',
@@ -11,36 +10,21 @@ import { AuthService } from './auth.service';
 export class CitizenService {
   private baseUrl = 'http://localhost:8082/api';
 
-  constructor(private http: HttpClient, private authService: AuthService) {}
-
-  private getAuthHeaders(): HttpHeaders {
-    const token = this.authService.getToken();
-    return new HttpHeaders({
-      Authorization: token ? `Bearer ${token}` : '',
-    });
-  }
+  constructor(private http: HttpClient) {}
 
   getMyReports(): Observable<CitizenReport[]> {
-    return this.http.get<CitizenReport[]>(`${this.baseUrl}/citizen`, {
-      headers: this.getAuthHeaders(),
-    });
+    return this.http.get<CitizenReport[]>(`${this.baseUrl}/citizen`);
   }
 
   createReport(payload: CitizenReportCreateRequest): Observable<CitizenReport> {
-    return this.http.post<CitizenReport>(`${this.baseUrl}/citizen`, payload, {
-      headers: this.getAuthHeaders(),
-    });
+    return this.http.post<CitizenReport>(`${this.baseUrl}/citizen`, payload);
   }
 
   getMyFeedbacks(): Observable<Feedback[]> {
-    return this.http.get<Feedback[]>(`${this.baseUrl}/feedback`, {
-      headers: this.getAuthHeaders(),
-    });
+    return this.http.get<Feedback[]>(`${this.baseUrl}/feedback`);
   }
 
   createFeedback(payload: FeedbackCreateRequest): Observable<Feedback> {
-    return this.http.post<Feedback>(`${this.baseUrl}/feedback`, payload, {
-      headers: this.getAuthHeaders(),
-    });
+    return this.http.post<Feedback>(`${this.baseUrl}/feedback`, payload);
   }
 }
