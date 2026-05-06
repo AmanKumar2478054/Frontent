@@ -2,6 +2,7 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { catchError, forkJoin, map, Observable, of } from 'rxjs';
 import { AuthService } from '../../Service/auth.service';
 import {
   ImpactResponseDto,
@@ -110,9 +111,30 @@ export class CityPlanner implements OnInit {
   loadProjects(): void {
     this.projectService.getProjects().subscribe({
       next: (projects: ProjectResponseDto[]) => {
-        this.projects = projects.map((project: ProjectResponseDto) => this.mapProject(project));
-        this.updateProjectStats();
-        this.cdr.detectChanges();
+        if (projects.length === 0) {
+          this.projects = [];
+          this.updateProjectStats();
+          this.cdr.detectChanges();
+          return;
+        }
+
+        const projectLoaders: Observable<Project>[] = projects.map((project: ProjectResponseDto) =>
+          this.enrichProjectCardData(project)
+        );
+
+        forkJoin(projectLoaders).subscribe({
+          next: (enrichedProjects: Project[]) => {
+            this.projects = enrichedProjects;
+            this.updateProjectStats();
+            this.cdr.detectChanges();
+          },
+          error: (error: unknown) => {
+            console.error('Failed to enrich project cards', error);
+            this.projects = projects.map((project: ProjectResponseDto) => this.mapProject(project));
+            this.updateProjectStats();
+            this.cdr.detectChanges();
+          },
+        });
       },
       error: (error: unknown) => {
         console.error('Failed to load projects', error);
@@ -137,6 +159,61 @@ export class CityPlanner implements OnInit {
       resources: [],
       progress: 0,
     };
+  }
+
+  private enrichProjectCardData(projectDto: ProjectResponseDto): Observable<Project> {
+    const baseProject = this.mapProject(projectDto);
+    const projectId = projectDto.projectId;
+
+    return forkJoin({
+      milestones: this.projectService.getMilestonesByProject(projectId).pipe(catchError(() => of([] as MilestoneResponseDto[]))),
+      resources: this.projectService.getResources(projectId).pipe(catchError(() => of([] as ResourceResponseDto[]))),
+      impacts: this.projectService.getImpactsByProject(projectId).pipe(catchError(() => of([] as ImpactResponseDto[]))),
+    }).pipe(
+      map(
+        ({
+          milestones,
+          resources,
+          impacts,
+        }: {
+          milestones: MilestoneResponseDto[];
+          resources: ResourceResponseDto[];
+          impacts: ImpactResponseDto[];
+        }) => {
+        const mappedMilestones = milestones.map((m: MilestoneResponseDto) => ({
+          id: m.milestoneId,
+          name: m.title,
+          date: m.milestoneDate,
+          status: m.status,
+        }));
+        const mappedResources = resources.map((r: ResourceResponseDto) => ({
+          id: r.resourceId,
+          name: r.location,
+          type: r.type,
+          quantity: r.capacity,
+          allocation: r.status,
+        }));
+        const latestImpact = impacts[impacts.length - 1];
+        const statement = latestImpact?.metricsJson?.['statement'];
+        const impactText =
+          typeof statement === 'string'
+            ? statement
+            : latestImpact
+              ? JSON.stringify(latestImpact.metricsJson)
+              : '';
+        const completedMilestones = mappedMilestones.filter((milestone: Milestone) => milestone.status === 'MET').length;
+        const progress =
+          mappedMilestones.length > 0 ? Math.round((completedMilestones / mappedMilestones.length) * 100) : 0;
+
+        return {
+          ...baseProject,
+          milestones: mappedMilestones,
+          resources: mappedResources,
+          impact: impactText,
+          progress,
+        };
+      })
+    );
   }
 
   updateProjectStats(): void {
