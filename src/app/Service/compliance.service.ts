@@ -54,6 +54,8 @@ export class ComplianceService {
   }
 
   getMyComplianceRecords(): Observable<ComplianceRecordResponse[]> {
-    return this.http.get<ComplianceRecordResponse[]>(`${this.complianceBaseUrl}/mine`, { headers: this.getAuthHeaders() });
+    const headers = this.getAuthHeaders();
+    console.log('[ComplianceService] GET /mine called. Has auth token:', !!this.authService.getToken());
+    return this.http.get<ComplianceRecordResponse[]>(`${this.complianceBaseUrl}/mine`, { headers });
   }
 }

@@ -114,9 +114,11 @@ export class ComplianceOfficer implements OnInit {
       date: this.complianceForm.value.date,
       notes: this.complianceForm.value.notes,
     };
+    console.log('[ComplianceOfficer] Creating compliance payload:', payload);
 
     this.complianceService.createComplianceRecord(payload).subscribe({
-      next: () => {
+      next: (createdRecord: ComplianceRecordResponse) => {
+        console.log('[ComplianceOfficer] Created compliance record response:', createdRecord);
         this.closeComplianceModal();
         this.loadMyComplianceRecords();
       },
@@ -128,8 +130,10 @@ export class ComplianceOfficer implements OnInit {
   }
 
   loadMyComplianceRecords(): void {
+    console.log('[ComplianceOfficer] Fetching my compliance records...');
     this.complianceService.getMyComplianceRecords().subscribe({
       next: (records: ComplianceRecordResponse[]) => {
+        console.log('[ComplianceOfficer] My compliance records response:', records);
         this.myComplianceRecords = records;
         this.cdr.detectChanges();
       },
