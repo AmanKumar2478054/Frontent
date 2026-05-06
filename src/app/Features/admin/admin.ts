@@ -67,7 +67,7 @@ export class Admin implements OnInit {
     });
   }
 
-  private loadDashboard(): void {
+  loadDashboard(): void {
     this.loading = true;
     const headers = this.getAuthHeaders();
 
@@ -79,10 +79,24 @@ export class Admin implements OnInit {
       resources: this.http.get<ResourceResponseDto[]>(`${this.baseUrl}/resources`, { headers }),
       complianceRecords: this.http.get<ComplianceRecordResponse[]>(`${this.baseUrl}/compliance`, { headers }),
     }).subscribe({
-      next: ({ reports, feedbacks, users, projects, resources, complianceRecords }) => {
+      next: ({
+        reports,
+        feedbacks,
+        users,
+        projects,
+        resources,
+        complianceRecords,
+      }: {
+        reports: CitizenReport[];
+        feedbacks: Feedback[];
+        users: UserResponse[];
+        projects: ProjectResponseDto[];
+        resources: ResourceResponseDto[];
+        complianceRecords: ComplianceRecordResponse[];
+      }) => {
         const sortedReports = [...(reports ?? [])].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         const sortedFeedbacks = [...(feedbacks ?? [])].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        const citizensCount = (users ?? []).filter((user) => (user.role ?? '').toUpperCase().includes('CITIZEN')).length;
+        const citizensCount = (users ?? []).filter((user: UserResponse) => (user.role ?? '').toUpperCase().includes('CITIZEN')).length;
 
         this.recentReports = sortedReports.slice(0, 4);
         this.recentFeedback = sortedFeedbacks.slice(0, 3);
