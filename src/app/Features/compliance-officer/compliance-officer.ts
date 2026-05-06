@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { AuthService } from '../../Service/auth.service';
+import { TopNavbar } from '../../core/components/top-navbar/top-navbar';
 import {
   ComplianceRecordCreateRequest,
   ComplianceRecordResponse,
@@ -12,7 +12,7 @@ import { ProjectResponseDto, ResourceResponseDto } from '../../Service/project.s
 
 @Component({
   selector: 'app-compliance-officer',
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, TopNavbar],
   templateUrl: './compliance-officer.html',
   styleUrl: './compliance-officer.css',
 })
@@ -30,7 +30,6 @@ export class ComplianceOfficer implements OnInit {
 
   constructor(
     private complianceService: ComplianceService,
-    private authService: AuthService,
     private fb: FormBuilder,
     private cdr: ChangeDetectorRef
   ) {
@@ -148,9 +147,5 @@ export class ComplianceOfficer implements OnInit {
   clearSelectedProject(): void {
     this.selectedProject = null;
     this.resources = [];
-  }
-
-  logout(): void {
-    this.authService.logout();
   }
 }

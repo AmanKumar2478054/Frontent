@@ -5,12 +5,12 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { CitizenService } from '../../Service/citizen.service';
 import { CitizenReport } from '../../core/models/citizen-report';
 import { Feedback } from '../../core/models/feedback';
-import { AuthService } from '../../Service/auth.service';
+import { TopNavbar } from '../../core/components/top-navbar/top-navbar';
 
 @Component({
   selector: 'app-citizen-portal',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, TopNavbar],
   templateUrl: './citizen-portal.html',
   styleUrl: './citizen-portal.css',
 })
@@ -38,7 +38,6 @@ export class CitizenPortal implements OnInit, AfterViewInit {
   constructor(
     private fb: FormBuilder,
     private citizenService: CitizenService,
-    private authService: AuthService,
     private cdr: ChangeDetectorRef
   ) {
     this.feedbackForm = this.fb.group({
@@ -147,9 +146,5 @@ export class CitizenPortal implements OnInit, AfterViewInit {
         this.cdr.detectChanges();
       }
     });
-  }
-
-  logout() {
-    this.authService.logout();
   }
 }

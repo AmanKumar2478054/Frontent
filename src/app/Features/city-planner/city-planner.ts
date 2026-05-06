@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { catchError, forkJoin, map, Observable, of } from 'rxjs';
-import { AuthService } from '../../Service/auth.service';
+import { TopNavbar } from '../../core/components/top-navbar/top-navbar';
 import {
   ImpactResponseDto,
   MilestoneResponseDto,
@@ -44,7 +44,7 @@ interface Project {
 
 @Component({
   selector: 'app-city-planner',
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, TopNavbar],
   templateUrl: './city-planner.html',
   styleUrl: './city-planner.css',
 })
@@ -70,7 +70,7 @@ export class CityPlanner implements OnInit {
     totalBudget: 0,
   };
 
-  constructor(private fb: FormBuilder, private projectService: ProjectService, private authService: AuthService, private cdr: ChangeDetectorRef) {
+  constructor(private fb: FormBuilder, private projectService: ProjectService, private cdr: ChangeDetectorRef) {
     this.initializeForms();
   }
 
@@ -469,7 +469,4 @@ export class CityPlanner implements OnInit {
     return icons[type] || '📋';
   }
 
-  logout(): void {
-    this.authService.logout();
-  }
 }

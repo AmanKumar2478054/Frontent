@@ -7,6 +7,7 @@ import { CityPlanner } from './Features/city-planner/city-planner';
 import { ComplianceOfficer } from './Features/compliance-officer/compliance-officer';
 import { GovernemntAuditor } from './Features/governemnt-auditor/governemnt-auditor';
 import { Home } from './Features/home/home';
+import { AdminReport } from './Features/admin-report/admin-report';
 import { PagenotFound } from './pagenot-found/pagenot-found';
 import { authGuard } from './core/guard/auth.guard';
 import { roleGuard } from './core/guard/role.guard';
@@ -23,6 +24,12 @@ export const routes: Routes = [
   {
     path: 'admin',
     component: Admin,
+    canActivate: [authGuard, roleGuard],
+    data: { role: 'ADMIN' },
+  },
+  {
+    path: 'admin/report',
+    component: AdminReport,
     canActivate: [authGuard, roleGuard],
     data: { role: 'ADMIN' },
   },
