@@ -7,36 +7,15 @@ import { forkJoin } from 'rxjs';
 import { AuthService } from '../../Service/auth.service';
 import { CitizenReport } from '../../core/models/citizen-report';
 import { Feedback } from '../../core/models/feedback';
-import { ProjectResponseDto, ResourceResponseDto } from '../../Service/project.service';
-import { ComplianceRecordResponse } from '../../Service/compliance.service';
+import { ProjectResponseDto, ResourceResponseDto } from '../../interfaces/project-api.interface';
+import { ComplianceRecordResponse } from '../../interfaces/compliance-api.interface';
+import {
+  AdminChartItem,
+  AdminDashboardUser,
+  AdminStatCard,
+  AdminSummaryTile,
+} from '../../interfaces/admin-view.interface';
 import { TopNavbar } from '../../core/components/top-navbar/top-navbar';
-
-interface UserResponse {
-  userId: number;
-  name: string;
-  email: string;
-  role: string;
-  status?: string;
-}
-
-interface StatCard {
-  label: string;
-  value: number;
-  icon: string;
-}
-
-interface ChartItem {
-  label: string;
-  value: number;
-  color: string;
-  hint?: string;
-}
-
-interface SummaryTile {
-  label: string;
-  value: string;
-  caption: string;
-}
 
 @Component({
   selector: 'app-admin',
@@ -50,7 +29,7 @@ export class Admin implements OnInit {
   loading = true;
   readonly baseUrl = 'http://localhost:8082/api';
 
-  stats: StatCard[] = [
+  stats: AdminStatCard[] = [
     { label: 'Total Reports', value: 0, icon: '📋' },
     { label: 'Total Citizens', value: 0, icon: '👥' },
     { label: 'Total Projects', value: 0, icon: '🏗️' },
@@ -61,10 +40,10 @@ export class Admin implements OnInit {
   recentFeedback: Feedback[] = [];
   chartItems: ChartItem[] = [];
   maxChartValue = 0;
-  reportStatusItems: ChartItem[] = [];
-  resourceTypeItems: ChartItem[] = [];
-  feedbackCategoryItems: ChartItem[] = [];
-  summaryTiles: SummaryTile[] = [];
+  reportStatusItems: AdminChartItem[] = [];
+  resourceTypeItems: AdminChartItem[] = [];
+  feedbackCategoryItems: AdminChartItem[] = [];
+  summaryTiles: AdminSummaryTile[] = [];
   generatedAt = '';
 
   constructor(private http: HttpClient, private authService: AuthService, private router: Router) {}
@@ -87,7 +66,7 @@ export class Admin implements OnInit {
     forkJoin({
       reports: this.http.get<CitizenReport[]>(`${this.baseUrl}/citizen/all`, { headers }),
       feedbacks: this.http.get<Feedback[]>(`${this.baseUrl}/feedback/all`, { headers }),
-      users: this.http.get<UserResponse[]>(`${this.baseUrl}/users`, { headers }),
+      users: this.http.get<AdminDashboardUser[]>(`${this.baseUrl}/users`, { headers }),
       projects: this.http.get<ProjectResponseDto[]>(`${this.baseUrl}/projects`, { headers }),
       resources: this.http.get<ResourceResponseDto[]>(`${this.baseUrl}/resources`, { headers }),
       complianceRecords: this.http.get<ComplianceRecordResponse[]>(`${this.baseUrl}/compliance`, { headers }),
@@ -102,14 +81,16 @@ export class Admin implements OnInit {
       }: {
         reports: CitizenReport[];
         feedbacks: Feedback[];
-        users: UserResponse[];
+        users: AdminDashboardUser[];
         projects: ProjectResponseDto[];
         resources: ResourceResponseDto[];
         complianceRecords: ComplianceRecordResponse[];
       }) => {
         const sortedReports = [...(reports ?? [])].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         const sortedFeedbacks = [...(feedbacks ?? [])].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        const citizensCount = (users ?? []).filter((user: UserResponse) => (user.role ?? '').toUpperCase().includes('CITIZEN')).length;
+        const citizensCount = (users ?? []).filter((user: AdminDashboardUser) =>
+          (user.role ?? '').toUpperCase().includes('CITIZEN')
+        ).length;
 
         this.recentReports = sortedReports.slice(0, 4);
         this.recentFeedback = sortedFeedbacks.slice(0, 3);
@@ -181,7 +162,7 @@ export class Admin implements OnInit {
     return Math.max(10, Math.round((value / this.maxChartValue) * 100));
   }
 
-  private buildDistribution<T>(items: T[], extractor: (item: T) => string, palette: string[]): ChartItem[] {
+  private buildDistribution<T>(items: T[], extractor: (item: T) => string, palette: string[]): AdminChartItem[] {
     const grouped: Record<string, number> = {};
     items.forEach((item: T) => {
       const key = (extractor(item) || 'Unknown').toString();

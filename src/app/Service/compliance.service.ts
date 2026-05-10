@@ -1,25 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ProjectResponseDto, ResourceResponseDto } from './project.service';
-
-export interface ComplianceRecordCreateRequest {
-  entityId: number;
-  entityType: string;
-  result: string;
-  date: string;
-  notes: string;
-}
-
-export interface ComplianceRecordResponse {
-  complianceId: number;
-  entityId: number;
-  entityType: string;
-  officerId: number;
-  result: string;
-  date: string;
-  notes: string;
-}
+import { ComplianceRecordCreateRequest, ComplianceRecordResponse } from '../interfaces/compliance-api.interface';
+import { ProjectResponseDto, ResourceResponseDto } from '../interfaces/project-api.interface';
 
 @Injectable({
   providedIn: 'root',

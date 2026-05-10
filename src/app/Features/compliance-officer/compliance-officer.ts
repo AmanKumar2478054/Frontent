@@ -3,12 +3,9 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { TopNavbar } from '../../core/components/top-navbar/top-navbar';
-import {
-  ComplianceRecordCreateRequest,
-  ComplianceRecordResponse,
-  ComplianceService,
-} from '../../Service/compliance.service';
-import { ProjectResponseDto, ResourceResponseDto } from '../../Service/project.service';
+import { ComplianceService } from '../../Service/compliance.service';
+import { ComplianceRecordCreateRequest, ComplianceRecordResponse } from '../../interfaces/compliance-api.interface';
+import { ProjectResponseDto, ResourceResponseDto } from '../../interfaces/project-api.interface';
 import { ToastService } from '../../core/services/toast.service';
 
 @Component({

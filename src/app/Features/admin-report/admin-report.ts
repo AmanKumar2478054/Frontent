@@ -5,25 +5,10 @@ import { catchError, finalize, forkJoin, Observable, of, tap, timeout } from 'rx
 import { AuthService } from '../../Service/auth.service';
 import { CitizenReport } from '../../core/models/citizen-report';
 import { Feedback } from '../../core/models/feedback';
-import { ProjectResponseDto, ResourceResponseDto } from '../../Service/project.service';
-import { ComplianceRecordResponse } from '../../Service/compliance.service';
+import { ProjectResponseDto, ResourceResponseDto } from '../../interfaces/project-api.interface';
+import { ComplianceRecordResponse } from '../../interfaces/compliance-api.interface';
+import { AdminChartItem, AdminReportUserSnippet, AdminSummaryTile } from '../../interfaces/admin-view.interface';
 import { TopNavbar } from '../../core/components/top-navbar/top-navbar';
-
-interface ChartItem {
-  label: string;
-  value: number;
-  color: string;
-}
-
-interface SummaryTile {
-  label: string;
-  value: string;
-  caption: string;
-}
-
-interface UserResponse {
-  role: string;
-}
 
 @Component({
   selector: 'app-admin-report',
@@ -37,11 +22,11 @@ export class AdminReport implements OnInit {
   loading = true;
   generatedAt = '';
   maxChartValue = 1;
-  chartItems: ChartItem[] = [];
-  reportStatusItems: ChartItem[] = [];
-  resourceTypeItems: ChartItem[] = [];
-  feedbackCategoryItems: ChartItem[] = [];
-  summaryTiles: SummaryTile[] = [];
+  chartItems: AdminChartItem[] = [];
+  reportStatusItems: AdminChartItem[] = [];
+  resourceTypeItems: AdminChartItem[] = [];
+  feedbackCategoryItems: AdminChartItem[] = [];
+  summaryTiles: AdminSummaryTile[] = [];
   loadError = '';
 
   constructor(private http: HttpClient, private authService: AuthService, private cdr: ChangeDetectorRef) {}
@@ -74,7 +59,7 @@ export class AdminReport implements OnInit {
     forkJoin({
       reports: safeRequest('reports', this.http.get<CitizenReport[]>(`${this.baseUrl}/citizen/all`, { headers }), [] as CitizenReport[]),
       feedbacks: safeRequest('feedbacks', this.http.get<Feedback[]>(`${this.baseUrl}/feedback/all`, { headers }), [] as Feedback[]),
-      users: safeRequest('users', this.http.get<UserResponse[]>(`${this.baseUrl}/users`, { headers }), [] as UserResponse[]),
+      users: safeRequest('users', this.http.get<AdminReportUserSnippet[]>(`${this.baseUrl}/users`, { headers }), [] as AdminReportUserSnippet[]),
       projects: safeRequest('projects', this.http.get<ProjectResponseDto[]>(`${this.baseUrl}/projects`, { headers }), [] as ProjectResponseDto[]),
       resources: safeRequest('resources', this.http.get<ResourceResponseDto[]>(`${this.baseUrl}/resources`, { headers }), [] as ResourceResponseDto[]),
       complianceRecords: safeRequest(
@@ -99,12 +84,14 @@ export class AdminReport implements OnInit {
       }: {
         reports: CitizenReport[];
         feedbacks: Feedback[];
-        users: UserResponse[];
+        users: AdminReportUserSnippet[];
         projects: ProjectResponseDto[];
         resources: ResourceResponseDto[];
         complianceRecords: ComplianceRecordResponse[];
       }) => {
-        const citizensCount = (users ?? []).filter((user: UserResponse) => (user.role ?? '').toUpperCase().includes('CITIZEN')).length;
+        const citizensCount = (users ?? []).filter((user: AdminReportUserSnippet) =>
+          (user.role ?? '').toUpperCase().includes('CITIZEN')
+        ).length;
         const totalResourceCapacity = (resources ?? []).reduce(
           (sum: number, resource: ResourceResponseDto) => sum + Number(resource.capacity ?? 0),
           0
@@ -170,7 +157,7 @@ export class AdminReport implements OnInit {
     return Math.max(10, Math.round((value / this.maxChartValue) * 100));
   }
 
-  private buildDistribution<T>(items: T[], extractor: (item: T) => string, palette: string[]): ChartItem[] {
+  private buildDistribution<T>(items: T[], extractor: (item: T) => string, palette: string[]): AdminChartItem[] {
     const grouped: Record<string, number> = {};
     items.forEach((item: T) => {
       const key = (extractor(item) || 'Unknown').toString();

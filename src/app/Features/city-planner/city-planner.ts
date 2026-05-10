@@ -4,44 +4,20 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { RouterModule } from '@angular/router';
 import { catchError, forkJoin, map, Observable, of } from 'rxjs';
 import { TopNavbar } from '../../core/components/top-navbar/top-navbar';
+import { ProjectService } from '../../Service/project.service';
 import {
   ImpactResponseDto,
   MilestoneResponseDto,
   ProjectResponseDto,
-  ProjectService,
   ResourceResponseDto,
-} from '../../Service/project.service';
+} from '../../interfaces/project-api.interface';
 import { ToastService } from '../../core/services/toast.service';
-
-interface Milestone {
-  id: number;
-  name: string;
-  date: string;
-  status: 'PENDING' | 'MET' | 'MISSED' | 'DEFERRED';
-}
-
-interface Resource {
-  id: number;
-  name: string;
-  type: string;
-  quantity: number;
-  allocation: string;
-}
-
-interface Project {
-  id: number;
-  name: string;
-  description: string;
-  category: string;
-  budget: number;
-  status: 'PLANNED' | 'ACTIVE' | 'ON_HOLD' | 'COMPLETED' | 'CANCELLED';
-  startDate: string;
-  endDate: string;
-  impact: string;
-  milestones: Milestone[];
-  resources: Resource[];
-  progress: number;
-}
+import {
+  CityPlannerMilestone,
+  CityPlannerMilestoneStatus,
+  CityPlannerProject,
+  CityPlannerProjectStatus,
+} from '../../interfaces/city-planner-view.interface';
 
 @Component({
   selector: 'app-city-planner',
@@ -50,7 +26,7 @@ interface Project {
   styleUrl: './city-planner.css',
 })
 export class CityPlanner implements OnInit {
-  projects: Project[] = [];
+  projects: CityPlannerProject[] = [];
   projectForm!: FormGroup;
   resourceForm!: FormGroup;
   milestoneForm!: FormGroup;
@@ -61,7 +37,7 @@ export class CityPlanner implements OnInit {
   showMilestoneModal = false;
   showImpactModal = false;
 
-  selectedProject: Project | null = null;
+  selectedProject: CityPlannerProject | null = null;
   activeTab: 'overview' | 'resources' | 'milestones' | 'impact' = 'overview';
 
   projectStats = {
@@ -71,7 +47,12 @@ export class CityPlanner implements OnInit {
     totalBudget: 0,
   };
 
-  constructor(private fb: FormBuilder, private projectService: ProjectService, private cdr: ChangeDetectorRef) {
+  constructor(
+    private fb: FormBuilder,
+    private projectService: ProjectService,
+    private cdr: ChangeDetectorRef,
+    private toast: ToastService
+  ) {
     this.initializeForms();
   }
 
@@ -119,12 +100,12 @@ export class CityPlanner implements OnInit {
           return;
         }
 
-        const projectLoaders: Observable<Project>[] = projects.map((project: ProjectResponseDto) =>
+        const projectLoaders: Observable<CityPlannerProject>[] = projects.map((project: ProjectResponseDto) =>
           this.enrichProjectCardData(project)
         );
 
         forkJoin(projectLoaders).subscribe({
-          next: (enrichedProjects: Project[]) => {
+          next: (enrichedProjects: CityPlannerProject[]) => {
             this.projects = enrichedProjects;
             this.updateProjectStats();
             this.cdr.detectChanges();
@@ -145,14 +126,14 @@ export class CityPlanner implements OnInit {
     });
   }
 
-  private mapProject(project: ProjectResponseDto): Project {
+  private mapProject(project: ProjectResponseDto): CityPlannerProject {
     return {
       id: project.projectId,
       name: project.title,
       description: project.description,
       category: 'N/A',
       budget: Number(project.budget ?? 0),
-      status: project.status,
+      status: project.status as CityPlannerProjectStatus,
       startDate: project.startDate,
       endDate: project.endDate,
       impact: '',
@@ -162,7 +143,7 @@ export class CityPlanner implements OnInit {
     };
   }
 
-  private enrichProjectCardData(projectDto: ProjectResponseDto): Observable<Project> {
+  private enrichProjectCardData(projectDto: ProjectResponseDto): Observable<CityPlannerProject> {
     const baseProject = this.mapProject(projectDto);
     const projectId = projectDto.projectId;
 
@@ -185,7 +166,7 @@ export class CityPlanner implements OnInit {
           id: m.milestoneId,
           name: m.title,
           date: m.milestoneDate,
-          status: m.status,
+          status: m.status as CityPlannerMilestoneStatus,
         }));
         const mappedResources = resources.map((r: ResourceResponseDto) => ({
           id: r.resourceId,
@@ -202,7 +183,9 @@ export class CityPlanner implements OnInit {
             : latestImpact
               ? JSON.stringify(latestImpact.metricsJson)
               : '';
-        const completedMilestones = mappedMilestones.filter((milestone: Milestone) => milestone.status === 'MET').length;
+        const completedMilestones = mappedMilestones.filter(
+          (milestone: CityPlannerMilestone) => milestone.status === 'MET'
+        ).length;
         const progress =
           mappedMilestones.length > 0 ? Math.round((completedMilestones / mappedMilestones.length) * 100) : 0;
 
@@ -243,6 +226,7 @@ export class CityPlanner implements OnInit {
           this.projects.push(this.mapProject(response));
           this.updateProjectStats();
           this.closeProjectModal();
+          this.toast.success('Project created successfully.');
         },
         error: (error: unknown) => {
           console.error('Failed to create project', error);
@@ -252,7 +236,7 @@ export class CityPlanner implements OnInit {
     }
   }
 
-  selectProject(project: Project): void {
+  selectProject(project: CityPlannerProject): void {
     this.selectedProject = project;
     this.activeTab = 'overview';
     this.loadProjectDetails(project.id);
@@ -276,7 +260,7 @@ export class CityPlanner implements OnInit {
           id: m.milestoneId,
           name: m.title,
           date: m.milestoneDate,
-          status: m.status,
+          status: m.status as CityPlannerMilestoneStatus,
         }));
         this.updateProjectProgress();
       },
@@ -338,6 +322,7 @@ export class CityPlanner implements OnInit {
         next: () => {
           this.loadProjectResources(this.selectedProject!.id);
           this.closeResourceModal();
+          this.toast.success('Resource added successfully.');
         },
         error: (error: unknown) => {
           console.error('Failed to add resource', error);
@@ -375,6 +360,7 @@ export class CityPlanner implements OnInit {
         next: () => {
           this.loadProjectMilestones(this.selectedProject!.id);
           this.closeMilestoneModal();
+          this.toast.success('Milestone added successfully.');
         },
         error: (error: unknown) => {
           console.error('Failed to add milestone', error);
@@ -395,7 +381,7 @@ export class CityPlanner implements OnInit {
     if (this.selectedProject) {
       const milestone = this.selectedProject.milestones.find(m => m.id === milestoneId);
       if (milestone) {
-        milestone.status = status as 'PENDING' | 'MET' | 'MISSED' | 'DEFERRED';
+        milestone.status = status as CityPlannerMilestoneStatus;
         this.updateProjectProgress();
       }
     }
@@ -428,6 +414,7 @@ export class CityPlanner implements OnInit {
         next: () => {
           this.selectedProject!.impact = this.impactForm.value.impact;
           this.closeImpactModal();
+          this.toast.success('Impact saved successfully.');
         },
         error: (error: unknown) => {
           console.error('Failed to set impact', error);
