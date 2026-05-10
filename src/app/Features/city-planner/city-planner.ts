@@ -226,11 +226,11 @@ export class CityPlanner implements OnInit {
           this.projects.push(this.mapProject(response));
           this.updateProjectStats();
           this.closeProjectModal();
-          this.toast.success('Project created successfully.');
+          this.toast.success('Your project has been created successfully!');
         },
         error: (error: unknown) => {
           console.error('Failed to create project', error);
-          this.toast.error('Failed to create project');
+          this.toast.error('Failed to create project.');
         },
       });
     }
@@ -322,11 +322,11 @@ export class CityPlanner implements OnInit {
         next: () => {
           this.loadProjectResources(this.selectedProject!.id);
           this.closeResourceModal();
-          this.toast.success('Resource added successfully.');
+          this.toast.success('Your resource has been added successfully!');
         },
         error: (error: unknown) => {
           console.error('Failed to add resource', error);
-          this.toast.error('Failed to add resource');
+          this.toast.error('Failed to add resource.');
         },
       });
     }
@@ -360,11 +360,11 @@ export class CityPlanner implements OnInit {
         next: () => {
           this.loadProjectMilestones(this.selectedProject!.id);
           this.closeMilestoneModal();
-          this.toast.success('Milestone added successfully.');
+          this.toast.success('Your milestone has been added successfully!');
         },
         error: (error: unknown) => {
           console.error('Failed to add milestone', error);
-          this.toast.error('Failed to add milestone');
+          this.toast.error('Failed to add milestone.');
         },
       });
     }
@@ -414,11 +414,11 @@ export class CityPlanner implements OnInit {
         next: () => {
           this.selectedProject!.impact = this.impactForm.value.impact;
           this.closeImpactModal();
-          this.toast.success('Impact saved successfully.');
+          this.toast.success('Your project impact has been saved successfully!');
         },
         error: (error: unknown) => {
           console.error('Failed to set impact', error);
-          this.toast.error('Failed to set impact');
+          this.toast.error('Failed to save impact.');
         },
       });
     }

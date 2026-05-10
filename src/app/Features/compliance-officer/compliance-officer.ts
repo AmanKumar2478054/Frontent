@@ -117,12 +117,13 @@ export class ComplianceOfficer implements OnInit {
     this.complianceService.createComplianceRecord(payload).subscribe({
       next: (createdRecord: ComplianceRecordResponse) => {
         console.log('[ComplianceOfficer] Created compliance record response:', createdRecord);
+        this.toast.success('Your compliance record has been created successfully!');
         this.closeComplianceModal();
         this.loadMyComplianceRecords();
       },
       error: (error: unknown) => {
         console.error('Failed to create compliance record', error);
-        this.toast.error('Failed to create compliance record');
+        this.toast.error('Failed to create compliance record.');
       },
     });
   }
