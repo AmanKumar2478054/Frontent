@@ -11,6 +11,7 @@ import {
   ProjectService,
   ResourceResponseDto,
 } from '../../Service/project.service';
+import { ToastService } from '../../core/services/toast.service';
 
 interface Milestone {
   id: number;
@@ -245,7 +246,7 @@ export class CityPlanner implements OnInit {
         },
         error: (error: unknown) => {
           console.error('Failed to create project', error);
-          alert('Failed to create project');
+          this.toast.error('Failed to create project');
         },
       });
     }
@@ -340,7 +341,7 @@ export class CityPlanner implements OnInit {
         },
         error: (error: unknown) => {
           console.error('Failed to add resource', error);
-          alert('Failed to add resource');
+          this.toast.error('Failed to add resource');
         },
       });
     }
@@ -377,7 +378,7 @@ export class CityPlanner implements OnInit {
         },
         error: (error: unknown) => {
           console.error('Failed to add milestone', error);
-          alert('Failed to add milestone');
+          this.toast.error('Failed to add milestone');
         },
       });
     }
@@ -430,7 +431,7 @@ export class CityPlanner implements OnInit {
         },
         error: (error: unknown) => {
           console.error('Failed to set impact', error);
-          alert('Failed to set impact');
+          this.toast.error('Failed to set impact');
         },
       });
     }

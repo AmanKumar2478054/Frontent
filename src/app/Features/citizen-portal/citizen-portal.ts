@@ -8,6 +8,7 @@ import { Feedback } from '../../core/models/feedback';
 import { TopNavbar } from '../../core/components/top-navbar/top-navbar';
 import { NotificationService } from '../../Service/notification.service';
 import { NotificationItem } from '../../interfaces/notification.interface';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-citizen-portal',
@@ -33,13 +34,16 @@ export class CitizenPortal implements OnInit, AfterViewInit {
     { label: 'Notifications', value: 5, icon: '🔔' }
   ];
   recentUpdates: NotificationItem[] = [];
+  /** IDs marked read in this session (frontend only). */
+  private readonly locallyReadIds = new Set<number>();
 
   constructor(
     private fb: FormBuilder,
     private citizenService: CitizenService,
     private notificationService: NotificationService,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private toast: ToastService
   ) {
     this.feedbackForm = this.fb.group({
       category: ['Waste', Validators.required],
@@ -85,13 +89,13 @@ export class CitizenPortal implements OnInit, AfterViewInit {
     if (this.feedbackForm.valid) {
       this.citizenService.createFeedback(this.feedbackForm.value).subscribe({
         next: () => {
-          alert('Thank you for your feedback!');
+          this.toast.success('Thank you for your feedback!');
           this.loadMyFeedbacks();
           this.closeFeedbackModal();
         },
         error: (err: unknown) => {
           console.error('Feedback submission failed', err);
-          alert('Failed to submit feedback.');
+          this.toast.error('Failed to submit feedback.');
         }
       });
     }
@@ -110,13 +114,13 @@ export class CitizenPortal implements OnInit, AfterViewInit {
     if (this.reportForm.valid) {
       this.citizenService.createReport(this.reportForm.value).subscribe({
         next: () => {
-          alert('Your report has been submitted successfully!');
+          this.toast.success('Your report has been submitted successfully!');
           this.loadMyReports();
           this.closeReportModal();
         },
         error: (err: unknown) => {
           console.error('Report submission failed', err);
-          alert('Failed to submit report.');
+          this.toast.error('Failed to submit report.');
         }
       });
     }
@@ -173,5 +177,16 @@ export class CitizenPortal implements OnInit, AfterViewInit {
         this.cdr.detectChanges();
       },
     });
+  }
+
+  isNotificationRead(update: NotificationItem): boolean {
+    const fromApi = (update.status ?? '').toUpperCase() === 'READ';
+    return fromApi || this.locallyReadIds.has(update.notificationId);
+  }
+
+  markNotificationRead(update: NotificationItem, event: Event): void {
+    event.stopPropagation();
+    this.locallyReadIds.add(update.notificationId);
+    this.cdr.detectChanges();
   }
 }

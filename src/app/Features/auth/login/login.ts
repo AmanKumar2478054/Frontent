@@ -6,6 +6,7 @@ import { AuthService } from '../../../Service/auth.service';
 import { loginUser } from '../../../core/models/loginUser'; 
 import { AuthResponse } from '../../../core/models/AuthResponse';
 import { UserDetails } from '../../../core/models/user-details';
+import { ToastService } from '../../../core/services/toast.service';
 @Component({
   selector: 'app-login',
   standalone: true,
@@ -17,9 +18,10 @@ export class Login {
   loginForm: FormGroup;
 
   constructor(
-    private fb: FormBuilder, 
-    private router: Router, 
-    private authService: AuthService
+    private fb: FormBuilder,
+    private router: Router,
+    private authService: AuthService,
+    private toast: ToastService
   ) {
     this.loginForm = this.fb.group({
       
@@ -60,7 +62,7 @@ export class Login {
       error: (err: any) => {
        
         console.error('HTTP Error Details:', err);
-        alert('Login failed: ' + (err.error?.message || 'Server unreachable'));
+        this.toast.error('Login failed: ' + (err.error?.message || 'Server unreachable'));
       }
     });
   }

@@ -9,6 +9,7 @@ import {
   ComplianceService,
 } from '../../Service/compliance.service';
 import { ProjectResponseDto, ResourceResponseDto } from '../../Service/project.service';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-compliance-officer',
@@ -31,7 +32,8 @@ export class ComplianceOfficer implements OnInit {
   constructor(
     private complianceService: ComplianceService,
     private fb: FormBuilder,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private toast: ToastService
   ) {
     this.complianceForm = this.fb.group({
       result: ['', [Validators.required, Validators.minLength(2)]],
@@ -123,7 +125,7 @@ export class ComplianceOfficer implements OnInit {
       },
       error: (error: unknown) => {
         console.error('Failed to create compliance record', error);
-        alert('Failed to create compliance record');
+        this.toast.error('Failed to create compliance record');
       },
     });
   }
